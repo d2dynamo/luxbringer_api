@@ -1,5 +1,6 @@
 {
-  "name": "luxbot",
+  "name": "luxapi",
+  "repository": "https://github.com/d2dynamo/luxbringer_api.git",
   "version": "1.0.0",
   "description": "Luxbringer API",
   "author": "Herkus Cernovas",
