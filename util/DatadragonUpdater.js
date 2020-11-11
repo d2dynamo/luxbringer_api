@@ -5,8 +5,8 @@ const tar = require("tar");
 const { logger } = require("./Loggers");
 const downloadFile = require("./Downloader.js");
 
-//run datadragon updater every second day at 03:10 AM
-module.exports = cron.schedule("10 3 * * 1,3,5,7", 
+//run datadragon updater every day at 03:10 AM
+module.exports = cron.schedule("10 3 * * 1-7", 
 async() => 
 {
     try{
