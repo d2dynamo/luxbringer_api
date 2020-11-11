@@ -18,3 +18,6 @@ node_modules/
 # Datadragon and temp files
 datadragon/
 temp/
+
+# nodemon config file
+nodemon.json
