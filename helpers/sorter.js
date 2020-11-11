@@ -22,6 +22,27 @@ function capitalize(str){
     }
 }
 
+/*
+*   Keep this for future incase riot decides to fully use the "stats" field. 
+*   Stats like Base Mana Regen, Lethality and Magic pen arent displayed in the stats field. 
+*   ex: Faerie Charm has Base Mana Regen but its not displayed in the "stats" field.
+*/
+function statName(statNameFull){
+    let statNames = 
+    {
+        "FlatHPPoolMod":"Health","FlatMPPoolMod":"Mana","PercentHPPoolMod":"Percent Health","PercentMPPoolMod":"Percent Mana",
+        "FlatHPRegenMod":"Base Health Regen","PercentHPRegenMod":"percent Health Regen","FlatMPRegenMod":"Base Mana Regen",
+        "PercentMPRegenMod":"Percent Mana Regen","FlatArmorMod":"Armor","PercentArmorMod":"Percent Armor","FlatPhysicalDamageMod":"Attack Damage",
+        "PercentPhysicalDamageMod":"Percent Attack Damage","FlatMagicDamageMod":"Ability Power","PercentMagicDamageMod":"Percent Ability Power",
+        "FlatMovementSpeedMod":"Base Movement Speed","PercentMovementSpeedMod":"Percent Movement Speed","FlatAttackSpeedMod":"Base Attack Speed",
+        "PercentAttackSpeedMod":"Percent Attack Speed","PercentDodgeMod":"Percent Dodge Chance","FlatCritChanceMod":"Critical Chance",
+        "PercentCritChanceMod":"Percent Critical Chance","FlatCritDamageMod":"Critical Damage","PercentCritDamageMod":"Percent Critical Damage",
+        "FlatBlockMod":"Flat Block","PercentBlockMod":"Percent Block","FlatSpellBlockMod":"Flat Spell Block","PercentSpellBlockMod":"Percent Spell Block",
+        "FlatEXPBonus":"Base EXP Bonus","PercentEXPBonus":"Percent EXP Bonus","FlatEnergyRegenMod":"Base Energy Regen","FlatEnergyPoolMod":"Base Energy",
+        "PercentLifeStealMod":"Percent Lifesteal","PercentSpellVampMod":"Percent Ability Lifesteal"
+    }
+    return statNames[statNameFull];
+}
 module.exports = {
     championName: async(chid) => 
     {
@@ -37,18 +58,20 @@ module.exports = {
 
     findItemId: async(itemName) => 
     {
-        for (let key in items)
+        for(let key in items)
         {
             if( 
                 items[key].name.includes(itemName) || items[key].name.includes(capitalize(itemName)) || items[key].colloq.includes(itemName)
             )
             { return key }
         }
+
         return "not found";
     },
 
     itemData: async(key) => 
     {
+
         debug("itemData key",key);
         let itemFull = items[key];
         let itemDesc = items[key].description;
@@ -67,6 +90,7 @@ module.exports = {
         let descList = itemDesc.split("</stats>")[1].split("<br>");
 
         let emptyItemIndexes = new Array();
+        let passiveIndexes = new Array();
         //clean up the descriptions
         descList.forEach( (item, index, array) => 
         {
@@ -74,6 +98,7 @@ module.exports = {
           if(item.length <= 1){ emptyItemIndexes.push(index); return;}
 
           //remove any html tags
+          if(item.includes("<passive>"))
           array[index] = item.replace(/<\/?[^>]+>/g, "");
         })
 
@@ -83,42 +108,46 @@ module.exports = {
           descList.splice(emptyItemIndexes.pop(), 1);
         }
 
-        let output = {
-            name: itemFull.name,
-            icon: itemFull.image.full,
-            stats: statsList,
-            descriptions: descList,
-        }
+        return { itemFull }
 
-        //check if item builds from another item or builds into another item and provide a list with their name and key
-        if(itemFull.from)
-        { 
-            let buildsFrom = new Array();
-            itemFull.from.forEach( item => 
-            {
-                buildsFrom.push(
-                {
-                    name: items[item].name,
-                    itemKey: item,
-                });
-            })
-            output.buildsFrom = buildsFrom;
-        }
-        if(itemFull.into)
-        {
-            let buildsInto = new Array();
-            itemFull.into.forEach( item => 
-            {
-                buildsInto.push(
-                {
-                    name: items[item].name,
-                    itemKey: item,
-                });
-            })
-            output.buildsInto = buildsInto;
-        }
+        // let output = {
+        //     name: itemFull.name,
+        //     icon: itemFull.image.full,
+        //     stats: statsList,
+        //     descriptions: descList,
+        // }
 
-        return output;
+        // //check if item builds from another item or builds into another item and provide a list with their name and key
+        // if(itemFull.from)
+        // { 
+        //     let buildsFrom = new Array();
+        //     itemFull.from.forEach( item => 
+        //     {
+        //         buildsFrom.push(
+        //         {
+        //             name: items[item].name,
+        //             itemIcon: items[item].image.full,
+        //             price: items[item].gold.total
+        //         });
+        //     })
+        //     output.buildsFrom = buildsFrom;
+        // }
+        // if(itemFull.into)
+        // {
+        //     let buildsInto = new Array();
+        //     itemFull.into.forEach( item => 
+        //     {
+        //         buildsInto.push(
+        //         {
+        //             name: items[item].name,
+        //             itemIcon: items[item].image.full,
+        //             price: items[item].gold.total
+        //         });
+        //     })
+        //     output.buildsInto = buildsInto;
+        // }
+
+        // return output;
     }
 
 }
