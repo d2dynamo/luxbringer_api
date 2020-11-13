@@ -40,7 +40,7 @@ module.exports = {
             case "summoner":
                 url += "/summoner/v4/summoners/by-name/";
                 break;
-            case "masteries":
+            case "summoner_masteries":
                 url += "/champion-mastery/v4/champion-masteries/by-summoner/";
                 break;
             case "summoner_match_list":

@@ -48,11 +48,9 @@ queueName: async(qid) => { return datadragon.queues.filter( (que) => { que.queue
 
 championName: async(chid) => 
 {
-    if(typeof(chid) !== string){ throw new TypeError("champion id should be a string number"); }
-
     for (let name in champions) 
     {
-        if( champions[name].key === chid ){ return champions[name].name }
+        if( champions[name].key === chid.toString() ){ return champions[name].name }
     }
 },
 
@@ -72,17 +70,6 @@ findItemId: async(itemName) =>
 //Sort ranked data
 rankData: async(data) => 
 {
-    //filter out solo queue and flex ranked stats
-    debug("data", data);
-
-    let filt = data.filter((item) => {
-        debug("current item", item.queueType === "RANKED_SOLO_5x5");
-        return item.queueType === "RANKED_SOLO_5x5";
-    });
-    debug("data filtered", filt);
-
-    let xd = new Array()
-
     let soloQRank = data.filter(item => item.queueType === "RANKED_SOLO_5x5")[0];
     let flexQRank = data.filter(item => item.queueType === "RANKED_FLEX_SR")[0];
 

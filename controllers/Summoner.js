@@ -14,9 +14,11 @@ module.exports = {
       let { summonerName, region } = req.body;
 
       let summonerData = await axios.get(`${riotApi("summoner", region)}${summonerName}?api_key=${apiKey}`);
-      let summonerRankedData = await axios.get(`${riotApi("summoner_rank", region)}${summonerData.data.id}?api_key=${apiKey}`)
+      let summonerRankedData = await axios.get(`${riotApi("summoner_rank", region)}${summonerData.data.id}?api_key=${apiKey}`);
+      let summonerMasteries = await axios.get(`${riotApi("summoner_masteries", region)}${summonerData.data.id}?api_key=${apiKey}`);
       //Sort out ranks
       let ranks = await sorter.rankData(summonerRankedData.data);
+      
       
       res.status(200).json
       ({
@@ -26,7 +28,13 @@ module.exports = {
           summonerIconId: summonerData.data.profileIconId,
           summonerLevel: summonerData.data.summonerLevel,
           soloQRank: `${ranks.soloduo.rank} ${ranks.soloduo.lp}lp`,
-          soloQWinrate: ranks.soloduo.winRate
+          soloQWinrate: ranks.soloduo.winRate,
+          topChampion: 
+          {
+            name: await sorter.championName(summonerMasteries.data[0].championId),
+            masteryLevel: summonerMasteries.data[0].championLevel,
+            masteryPoints: summonerMasteries.data[0].championPoints,
+          }
         }
 
       });
