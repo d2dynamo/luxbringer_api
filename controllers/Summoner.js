@@ -8,26 +8,31 @@ const apiKey = secrets.apiKey;
 let riotApi = queryStrings.urlGet;
 
 module.exports = {
-  generalInfo: async(req, res, next, opt) => {
+  generalInfo: async(req, res, next) => {
     try
     {
       let { summonerName, region } = req.body;
-      let response = await axios.get(`${riotApi("summoner", region)}${summonerName}?api_key=${apiKey}`)
 
+      let summonerData = await axios.get(`${riotApi("summoner", region)}${summonerName}?api_key=${apiKey}`);
+      let summonerRankedData = await axios.get(`${riotApi("summoner_rank", region)}${summonerData.data.id}?api_key=${apiKey}`)
+      //Sort out ranks
+      let ranks = await sorter.rankData(summonerRankedData.data);
+      
       res.status(200).json
       ({
         data:
         {
-          message: response.data,
-          summonerName: response.data.name,
-          summonerIconId: response.data.profileIconId,
-          summonerLevel: response.data.summonerLevel
+          summonerName: summonerData.data.name,
+          summonerIconId: summonerData.data.profileIconId,
+          summonerLevel: summonerData.data.summonerLevel,
+          soloQRank: `${ranks.soloduo.rank} ${ranks.soloduo.lp}lp`,
+          soloQWinrate: ranks.soloduo.winRate
         }
 
       });
 
     }
-    catch(e){next(e);}
+    catch(e){next(e)}
   }
   
 };

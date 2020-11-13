@@ -69,6 +69,40 @@ findItemId: async(itemName) =>
     return "not found";
 },
 
+//Sort ranked data
+rankData: async(data) => 
+{
+    //filter out solo queue and flex ranked stats
+    debug("data", data);
+
+    let filt = data.filter((item) => {
+        debug("current item", item.queueType === "RANKED_SOLO_5x5");
+        return item.queueType === "RANKED_SOLO_5x5";
+    });
+    debug("data filtered", filt);
+
+    let xd = new Array()
+
+    let soloQRank = data.filter(item => item.queueType === "RANKED_SOLO_5x5")[0];
+    let flexQRank = data.filter(item => item.queueType === "RANKED_FLEX_SR")[0];
+
+    return output =
+    {
+        soloduo: 
+        {
+            rank: `${capitalize(soloQRank.tier.toLowerCase())} ${soloQRank.rank}`,
+            lp: soloQRank.leaguePoints,
+            winRate: `${Math.round(( (soloQRank.wins / (soloQRank.wins + soloQRank.losses)) * 1000 )) / 10}%`
+        },
+        flex: 
+        {
+            rank: `${capitalize(flexQRank.tier.toLowerCase())} ${flexQRank.rank}`,
+            lp: flexQRank.leaguePoints,
+            winRate: `${Math.round(( (flexQRank.wins / (flexQRank.wins + flexQRank.losses)) * 1000 )) / 10}%`
+        }
+    }
+},
+
 /*
 * Item sorter. Provide the item id and it will return all the data you could need.
 * Will need updating if rito changes how items are described again.
