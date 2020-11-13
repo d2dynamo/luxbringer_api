@@ -3,7 +3,7 @@ const { sorter, queryStrings } = require("../helpers");
 const { secrets } = require("../config");
 const { logger } = require("../util");
 const apiKey = secrets.apiKey;
-const itemStore = require("../datadragon/10.1.1/data/en_US/item.json");
+const itemStore = require("../datadragon/10.23.1/data/en_US/item.json");
 
 //destruct the items object
 let { data: items } = itemStore;

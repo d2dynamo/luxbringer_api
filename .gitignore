@@ -21,3 +21,6 @@ temp/
 
 # nodemon config file
 nodemon.json
+
+# Config files
+config/
