@@ -46,9 +46,9 @@ module.exports = {
 //Simple sorters to get names/ids by id from ddragon
 
 //takes queue id and returns queue object
-findQueueName: async(qid) => { return datadragon.queues.filter( (que) => { que.queueId === parseInt(qid) }) },
+findQueueName: async(qid) => { return datadragon.queues.filter( (que) => { que.queueId === parseInt(qid) }).description },
 
-findQueueId: async(qname) => {  return datadragon.queues.filter( (que) => { que.description.toLowerCase().contains(qname) }) },
+findQueueId: async(qname) => {  return datadragon.queues.filter( (que) => { que.description.toLowerCase().contains(qname) }).queueId },
 
 findChampionName: async(chid) => 
 {
@@ -127,7 +127,7 @@ itemData: async(data) =>
 
         //remove any html tags
         //If item has passive, replace the tag to mark Passive and then remove html tags 
-        item = item.replace("<passive>", "Passive - ");
+        item = item.replace(/<passive>/g, "Passive - ");
         item = item.replace(/<\/?[^>]+>/g, "");
         array[index] = item.trim();
     })
