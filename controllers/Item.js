@@ -18,8 +18,8 @@ module.exports = {
           let itemId = await sorter.findItemId(itemName);
           if(itemId === "not found"){ res.status(404).send("not found"); return; }
 
-          //get the parsed item
-          let parsedItem = await sorter.itemData(itemId);
+          //send the item trough the parser
+          let parsedItem = await sorter.itemData(items[itemId]);
           res.status(200).json
           ({
             item: parsedItem

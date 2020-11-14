@@ -44,9 +44,13 @@ function statName(statNameFull){
 }
 module.exports = {
 //Simple sorters to get names/ids by id from ddragon
-queueName: async(qid) => { return datadragon.queues.filter( (que) => { que.queueId === parseInt(qid) }) },
 
-championName: async(chid) => 
+//takes queue id and returns queue object
+findQueueName: async(qid) => { return datadragon.queues.filter( (que) => { que.queueId === parseInt(qid) }) },
+
+findQueueId: async(qname) => {  return datadragon.queues.filter( (que) => { que.description.toLowerCase().contains(qname) }) },
+
+findChampionName: async(chid) => 
 {
     for (let name in champions) 
     {
@@ -59,7 +63,7 @@ findItemId: async(itemName) =>
     for(let key in items)
     {
         if( 
-            items[key].name.includes(itemName) || items[key].name.includes(capitalize(itemName)) || items[key].colloq.includes(itemName)
+            items[key].name.toLowerCase().includes(itemName.toLowerCase()) || items[key].colloq.includes(itemName.toLowerCase())
         )
         { return key }
     }
@@ -91,15 +95,13 @@ rankData: async(data) =>
 },
 
 /*
-* Item sorter. Provide the item id and it will return all the data you could need.
+* Item sorter. Provide the item object and it will return item data properly sorted.
 * Will need updating if rito changes how items are described again.
 */
-itemData: async(key) => 
+itemData: async(data) => 
 {
-    let itemFull = items[key];
-
     //separate stats from description
-    let statsList = items[key].description.split("<stats>")[1].split("</stats>")[0].split("<br>");
+    let statsList = data.description.split("<stats>")[1].split("</stats>")[0].split("<br>");
 
     //clean up, remove html tags and leading/trailing whitespaces
     statsList.forEach( (item, index, array) => 
@@ -113,7 +115,7 @@ itemData: async(key) =>
     * Stats end with </stats> so split it away, select the second item and split by <br>.
     * Multiple base passives are separated with <li>, Mythic Passives and other rules come afterwards separated with <br>.
     */
-    let descList = items[key].description.split("</stats>")[1].split("<br>");
+    let descList = data.description.split("</stats>")[1].split("<br>");
 
     let emptyItemIndexes = new Array();
     
@@ -138,38 +140,38 @@ itemData: async(key) =>
 
 
     let output = {
-        name: itemFull.name,
-        icon: itemFull.image.full,
+        name: data.name,
+        icon: data.image.full,
         stats: statsList,
         descriptions: descList,
     }
 
     //check if item builds from another item or builds into another item and provide a list with their name, price and icon
     //(remove iconName since that is only relevant for the bot?)
-    if(itemFull.from)
+    if(data.from)
     { 
         let buildsFrom = new Array();
-        itemFull.from.forEach( item => 
+        data.from.forEach( item => 
         {
             buildsFrom.push(
             {
-                name: items[item].name,
-                iconName: items[item].image.full,
-                price: items[item].gold.total
+                name: data.name,
+                iconName: data.image.full,
+                price: data.gold.total
             });
         })
         output.buildsFrom = buildsFrom;
     }
-    if(itemFull.into)
+    if(data.into)
     {
         let buildsInto = new Array();
-        itemFull.into.forEach( item => 
+        data.into.forEach( item => 
         {
             buildsInto.push(
             {
-                name: items[item].name,
-                iconName: items[item].image.full,
-                price: items[item].gold.total
+                name: data.name,
+                iconName: data.image.full,
+                price: data.gold.total
             });
         })
         output.buildsInto = buildsInto;
