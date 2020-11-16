@@ -45,10 +45,27 @@ function statName(statNameFull){
 module.exports = {
 //Simple sorters to get names/ids by id from ddragon
 
-//takes queue id and returns queue object
-findQueueName: async(qid) => { return datadragon.queues.filter( (que) => { que.queueId === parseInt(qid) }).description },
+//takes queue id and returns queue description
+findQueueName: async(qid) => 
+{ 
+    return datadragon.queues.filter
+    ( 
+        (que) => { return que.queueId === parseInt(qid) } 
+    )[0].description;
+},
+//takes queue name and returns an array of queue ids that matched
+findQueueIds: async(qname) => 
+{ 
+    let output = new Array();
 
-findQueueId: async(qname) => {  return datadragon.queues.filter( (que) => { que.description.toLowerCase().contains(qname) }).queueId },
+    datadragon.queues.filter
+    ( 
+        (que) => { return que.description.toLowerCase().includes(qname) } 
+    )
+    .forEach( item => { output.push(item.queueId) } )
+
+    return output;
+},
 
 findChampionName: async(chid) => 
 {
