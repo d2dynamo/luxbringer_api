@@ -66,15 +66,33 @@ findQueueIds: async(qname) =>
 
     return output;
 },
+//takes matchobject from get matches by accountId and returns role name
+findRoleName: async(match) =>
+{
+    if( match.role === "DUO_SUPPORT" ){ return "support" }
+    else{
+        switch(match.lane)
+        {
+            case "BOTTOM": return "adc";
+            default: return match.lane.toLowerCase();
+        }
+    }
+},
 
+//find champion name by id
 findChampionName: async(chid) => 
 {
     for (let name in champions) 
     {
-        if( champions[name].key === chid.toString() ){ return champions[name].name }
+        if( 
+            champions[name].key === chid.toString() 
+        )
+        { return champions[name].name }
     }
+    return "not found";
 },
 
+//find item id by name
 findItemId: async(itemName) => 
 {
     for(let key in items)
@@ -195,6 +213,46 @@ itemData: async(data) =>
     }
 
     return output;
-}
+},
+/*
+* sort match stats given a match object
+* Also need the requested summoner's name so that the specified summoner's stats can be sorted out of the rest
+* Only get the requested summoners full stats since it most often isnt important to casual discussions to know 
+* every detail about the enemy (though this is really just thinking discordbot first)
+*/
+matchData: async(data, summonerName) => 
+{   
+    /*
+    * Current format is going to be: 
+    * Both teams: win; towers taken; kills;
+    * 
+    * Requested summoner: 
+    *   team; champion name; K/D/A; cs/min; total gold; vision score; wards placed?; 
+    *   summspells; items; runes[]; totalDamageDealt; totalDamageTaken;
+    * 
+    * Other summoners: champion name; K/D/A; cs/min; summspells; items[]; rune pages primary/second;
+    */
+    let output = { 
+        teamBlue: { win: false, towersTaken: 0, totalKills: 0 }, 
+        teamRed: { win: false, towersTaken: 0, totalKills: 0 }, 
+        summoner: 
+        {   
+            team: "",
+            champion:"",
+            kda: "",
+            csPerMin: 0,
+            totalGold: 0,
+            visionScore: 0,
+            wardsPlaced: 0,
+            summonerSpell1: "",
+            summonerSpell2: "",
+            items: [],
+            runes: { primary:[], secondary:[] },
+            totalDamageDealt: 0,
+            totalDamageTaken: 0
+        }, 
+        players:[]
+    };
+},
 
 }
