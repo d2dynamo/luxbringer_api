@@ -19,7 +19,7 @@ module.exports = {
           if(itemId === "not found"){ res.status(404).send("not found"); return; }
 
           //send the item trough the parser
-          let parsedItem = await sorter.itemData(items[itemId]);
+          let parsedItem = await sorter.itemDataSimple(items[itemId]);
           res.status(200).json
           ({
             item: parsedItem
@@ -28,4 +28,23 @@ module.exports = {
         }
         catch(e){ next(e); }
     },
+    detailedInfo: async(req, res, next) => {
+      try
+      {
+        let { itemName } = req.body;
+        
+        
+        let itemId = await sorter.findItemId(itemName);
+        if(itemId === "not found"){ res.status(404).send("not found"); return; }
+
+
+        let parsedItem = await sorter.itemData(items[itemId]);
+        res.status(200).json
+        ({
+          item: parsedItem
+        });
+
+      }
+      catch(e){ next(e); }
+  },
 }
