@@ -39,19 +39,22 @@ module.exports = {
         switch (type) {
             case "summoner":
                 url += "/summoner/v4/summoners/by-name/";
-                break;
+            break;
             case "summoner_masteries":
                 url += "/champion-mastery/v4/champion-masteries/by-summoner/";
-                break;
+            break;
             case "summoner_match_list":
                 url += "/match/v4/matchlists/by-account/";
-                break;
+            break;
             case "current_game":
                 url += "/spectator/v4/active-games/by-summoner/";
-                break;
+            break;
             case "summoner_rank":
                 url += "/league/v4/entries/by-summoner/"
-                break;
+            break;
+            case "match_stats":
+                url += "/match/v4/matches/"
+            break;
         }
         return url;
     }
