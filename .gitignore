@@ -17,6 +17,7 @@ node_modules/
 
 # Datadragon and temp files
 datadragon/
+legacyDatadragon/
 temp/
 
 # nodemon config file
