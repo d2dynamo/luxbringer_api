@@ -17,7 +17,9 @@ Retrieve basic or detailed item data
 Retrieve basic champion stats
 
 TODO:
-Retrieve detailed champion info which includes base stats and ability stats
+Retrieve detailed champion info which includes base stats and ability stats (Ability data is not included in the champion.json. Ability data is included in each champion's json in data/en_US/champion/[CHAMPION_NAME].json).
 
-Fix the damn datadragon updater so it doesnt need you to create two directories before it updates once
-Also,ddragon file importers have ddragon version hardcoded, store ddragon version as env variable? actually should just probably do 'global.' on this one
+Fix the damn datadragon updater so it doesnt need you to create two directories before it updates once.
+Also, datadragon file importers have ddragon version hardcoded, store ddragon version as env variable? actually should just probably do 'global.' on this one.
+
+Separate all sorter functions into separate files? sorter.js will have over 700 lines and 12 exported functions once detailed champion sorter is added.
