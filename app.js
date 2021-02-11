@@ -8,6 +8,16 @@ const cors = require("cors");
 const {logger, userLogger} = require("./util");
 const {Checker} = require("./middleware");
 
+//get datadragon version upon initialization and set it to global.
+const axios = require("axios");
+let ddVerRes = axios.get(`https://ddragon.leagueoflegends.com/api/versions.json`)
+.then( ddVersionsResponse => {
+  global.DATADRAGON_VERSION = ddVersionsResponse.data[0];
+  debug(`datadragon version ${DATADRAGON_VERSION}`);
+})
+.catch( error => {debug(`Couldn't get datadragon version ${error}`)} )
+
+
 //import datadragon updater which also starts the cron schedule
 const { DatadragonUpdater } = require("./util");
 
