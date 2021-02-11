@@ -619,9 +619,60 @@ let output =
 return output;
 //END OF matchData()
 },
-/** Get simple champion info */
-championDataSimple: async(data) => 
-{
 
-}
+
+/** Get simple champion info. Takes a champion object */
+championDataSimple: async(data) => 
+{   
+    /**
+     * Current format:
+     *  name; base health; health per level; mana; mana per second;
+     *  ad; ad per level;
+     */
+    champions["Aatrox"]
+    let output = 
+    {
+        name: data.name,
+
+        hp: data.stats["hp"],
+        hpPerLevel: data.stats["hpperlevel"],
+
+        hpRegen: data.stats["hpregenperlevel"],
+        hpRegenPerLevel: data.stats["hpregenperlevel"],
+
+        resourceType: data.partype,
+        mp: data.stats["mp"],
+        mpPerLevel: data.stats["mpperlevel"],
+
+        mpRegen: data.stats["mpregen"],
+        mpRegenPerLevel: data.stats["mpregenperlevel"],
+
+        armor: data.stats["armor"],
+        armorPerLevel: data.stats["armorperlevel"],
+
+        mr: data.stats["spellblock"],
+        mrPerLevel: data.stats["spellblockperlevel"],
+
+        ad: data.stats["attackdamage"],
+        adPerLevel: data.stats["attackdamageperlevel"],
+
+        as: data.stats["attackspeed"],
+        asPerLevel: data.stats["attackspeedperlevel"],
+
+        range: data.stats["attackrange"],
+
+        ms: data.stats["movespeed"],
+
+    }
+
+    return output;
+},
+
+/** Get detailed champion info */
+// Currently cant find where rito stores champion ability stats' info. 
+// ex: the base damage of aatrox q increases per level but it is not shown in any ddragon json file
+// championData: async(data) => 
+// {
+
+// }
 }
