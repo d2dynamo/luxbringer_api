@@ -8,6 +8,7 @@ initial setup will require to have the following directories created in project 
 "./temp/datadragon"
 Gonna make it all automatic eventually...
 
+Keep legacy items from s9 for now.
 
 Current features:
 Retrieve summoner info
