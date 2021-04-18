@@ -1,4 +1,4 @@
-const cron = require("node-cron");
+const debug = require("debug")("test:ddUpdater");
 const axios = require("axios");
 const fs = require("fs-extra");
 const tar = require("tar");
@@ -6,93 +6,87 @@ const { logger } = require("./Loggers");
 const downloadFile = require("./Downloader.js");
 
 //run datadragon updater every day at 03:10 AM
-module.exports = cron.schedule("10 3 * * 1-7", 
-async() => 
+module.exports = function DatadragonUpdater()
 {
-    try{
-        fs.readdir("./datadragon", async(error, files) => {
-            if(error){throw error}
+function doUpdate(newVersion){
+return new Promise((resolve) => {
+    fs.ensureDir("./temp/datadragon")
+    .then(() => {
 
-            logger.info({message:"checking for datadragon update"});
+        logger.info({message:"Downloading new datadragon"});
+        return downloadFile(`https://ddragon.leagueoflegends.com/cdn/dragontail-${newVersion}.tgz`, `./temp/dragontail-${newVersion}.tgz`);
 
-            //get local datadragon version (assuming that nothing else touches this directory)
-            let localver = files[0];
-            
-            //get latest datadragon version
-            let response = await axios.get(`https://ddragon.leagueoflegends.com/api/versions.json`);
-            let newver = response.data[0];
-            
-            logger.info({message:`local datadragon: ${localver}. current datadragon: ${newver}.`});
+    })
+    .then(() => {
 
-            if(newver === localver){ logger.info({message: "local datadragon up-to-date"}); return; } 
-      
-            //if local datadragon version is outdated
-            else{
-                //create updating.txt file which is used to check if datadragon is being updated before
-                //serving from datadragon dependant endpoints. at middleware/Checker.js
-                fs.writeFile("./temp/updating.txt", "files updating")
-                .then(logger.info({message: `updating datadragon ${localver} to ${newver}`}))
-                .catch(e => {throw e})
-
-                //download latest datadragon tarball
-                downloadFile(`https://ddragon.leagueoflegends.com/cdn/dragontail-${newver}.tgz`, `./temp/dragontail-${newver}.tgz`)
-                .then(() => {
-                
-                    logger.info({message: "new datadragon downloaded"});
+        logger.info({message:"New datadragon downloaded. Extracting files."});
+        return tar.x( { file: `./temp/dragontail-${newVersion}.tgz`, cwd: "./temp/datadragon/" }, 
+        [
+            `${newVersion}/manifest.json`, `${newVersion}/data/en_US`, `${newVersion}/img/champion`, `${newVersion}/img/item`, `${newVersion}/img/passive`, 
+            `${newVersion}/img/profileicon`, `${newVersion}/img/spell`, `img/champion/tiles`, `img/perk-images`
+        ]);
         
-                    //extract files to temp directory
-                    tar.x( 
-                    {
-                        file: `./temp/dragontail-${newver}.tgz`, cwd: "./temp/datadragon/"
-                    }, 
-                    [
-                        `${newver}/data/en_US`, `${newver}/img/champion`, `${newver}/img/item`, `${newver}/img/passive`, 
-                        `${newver}/img/profileicon`, `${newver}/img/spell`, `img/champion/tiles`, `img/perk-images`
-                    ], 
-                    (error) => {
 
-                        if(error){throw error}
+    })
+    .then(() => {
 
-                        logger.info({message: "new datadragon extracted"});
-            
-                        //remove local datadragon
-                        fs.rmdir("./datadragon", {recursive: true})
-                        .then(() => {
-            
-                            //copy new datadragon from temp to root
-                            fs.copy(`./temp/datadragon/`, `./datadragon/`)
-                            .then(() => {
-                                logger.info({message: "local datadragon replaced with new datadragon"});
-                                
-                                //remove temp files
-                                //rmdir cannot remove just the content of directory so must delete the entire tree
-                                //and must mkdir again otherwise downloader and tar will crash when directory doesnt exist
-                                //TODO: Update node to 14.14.0+ and use fs.rm which could remove just the content and leave directory
-                                //...or just get directory names and remove them accordingly?
-                                fs.rmdir(`./temp`, {recursive: true})
-                                .then(() => {
-                                    logger.info({message: "temp files deleted"});
-                                    
-                                    //make temp dir
-                                    fs.mkdir(`./temp/datadragon`, {recursive: true})
-                                    .then(() => {
-                                        logger.info({message: "datadragon updated"});
-            
-                                    }).catch(e => {throw e})
-                                }).catch(e => {throw e})
-                            }).catch(e => {throw e})
-                        }).catch(e => {throw e});
+        logger.info({message:"New files extracted. Moving files from /temp to /datadragon"});
+        //fs-extra.move for some reason gives 'EPERM: operation not permitted, rename:' 
+        //error on move operation for "./temp/datadragon" to "./datadragon"
+        //i have tested other directories and be they empty or not, move operation would work
+        //i suspect fs-extra.move might not like moving folders with a numeric name such as "./temp/datadragon/10.21.1" 
+        //and i cant be bothered right so now sticking with fs-extra.copy for now 
+        return fs.copy("./temp/datadragon", "./datadragon", {overwrite: true});
+    })
+    .then(() => {
+        //move manifest to root datadragon folder for easy access
+        return fs.move(`./datadragon/${newVersion}/manifest.json`, "./datadragon/manifest.json")
+    })
+    .then(() => {
+        //delete temp files
+        return fs.rm("./temp", {recursive:true})
+    })
+    .then(() => {
+        logger.info({message:`Datadragon updated to latest. v${newVersion}`});
+        resolve(true);
+    })
+    .catch(error => { throw error })
+})
+}
+return new Promise((resolve, reject) => {
+    
+    //Write temporary file to show that datadragon is updating. 
+    //"Checker" middleware checks for updating.txt before letting trough requests to datadragon dependant endpoints.
+    fs.writeFileSync("./temp/updating.txt")
 
-                    })
+    let newVersion;
 
-                }).catch(e => {throw e});
-      
-            }
-        });
+    axios.get(`https://ddragon.leagueoflegends.com/api/versions.json`)
+    .then((response) => {
+        //Get latest version and check if manifest.json exists
+        newVersion = response.data[0];
+        return fs.pathExists("./datadragon/manifest.json");
+    })
+    .then((exists) => {
+        if(!exists){
+            logger.info("manifest.json missing, assuming datadragon files are missing. Updating datadragon.")
+            resolve(doUpdate(newVersion));
+        }
+        else{
+            fs.readJSON("./datadragon/manifest.json")
+            .then((obj) => {
+                logger.info({message:`local datadragon version: ${obj.v}. Latest datadragon version: ${newVerison}`})
+                //Reject if version is latest, do update if not
+                if(obj.v == newVersion){
+                    //Remove the temporary file so datadragon dependant endpoints can now be reached (doUpdate() does this by itself)
+                    fs.rm("./temp/updating.txt")
+                    .then(() => { reject("datadragon is up-to-date") }) 
+                }
+                else{ resolve(doUpdate(newVersion)) }
+            })
+        }
+    })
+    .catch(error => { throw error })
 
-    } 
-    catch(error){ fs.removeSync("./temp/updating.txt"); logger.error({status:500, message:error}); }
-});
-
-// check for new datadragon version every second day at 03:00 local time
-
+})
+}
