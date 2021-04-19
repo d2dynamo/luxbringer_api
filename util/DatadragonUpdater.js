@@ -5,7 +5,6 @@ const tar = require("tar");
 const { logger } = require("./Loggers");
 const downloadFile = require("./Downloader.js");
 
-//run datadragon updater every day at 03:10 AM
 module.exports = function DatadragonUpdater()
 {
 function doUpdate(newVersion){
@@ -53,8 +52,9 @@ return new Promise((resolve) => {
     .catch(error => { throw error })
 })
 }
+
 return new Promise((resolve, reject) => {
-    
+    logger.info("Running datadragon updater")
     //Write temporary file to show that datadragon is updating. 
     //"Checker" middleware checks for updating.txt before letting trough requests to datadragon dependant endpoints.
     fs.writeFileSync("./temp/updating.txt")
@@ -89,4 +89,5 @@ return new Promise((resolve, reject) => {
     .catch(error => { throw error })
 
 })
+
 }
