@@ -29,17 +29,22 @@ return new Promise((resolve) => {
     })
     .then(() => {
 
-        logger.info({message:"New files extracted. Moving files from /temp to /datadragon"});
+        logger.info({message:"New files extracted. Copying files from /temp to /datadragon"});
         //fs-extra.move for some reason gives 'EPERM: operation not permitted, rename:' 
         //error on move operation for "./temp/datadragon" to "./datadragon"
         //i have tested other directories and be they empty or not, move operation would work
         //i suspect fs-extra.move might not like moving folders with a numeric name such as "./temp/datadragon/10.21.1" 
         //and i cant be bothered right so now sticking with fs-extra.copy for now 
-        return fs.copy("./temp/datadragon", "./datadragon", {overwrite: true});
+        return fs.copy(`./temp/datadragon/${newVersion}/data`, "./datadragon/data", {overwrite: true})
     })
     .then(() => {
-        //move manifest to root datadragon folder for easy access
-        return fs.move(`./datadragon/${newVersion}/manifest.json`, "./datadragon/manifest.json")
+        return fs.copy(`./temp/datadragon/${newVersion}/img`, "./datadragon/img", {overwrite: true})
+    })
+    .then(() => {
+        return fs.copy(`./temp/datadragon/${newVersion}/manifest.json`, "./datadragon/manifest.json", {overwrite: true})
+    })
+    .then(() => {
+        return fs.copy(`./temp/datadragon/img`, "./datadragon/img")
     })
     .then(() => {
         //delete temp files
