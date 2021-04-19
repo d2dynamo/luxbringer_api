@@ -2,7 +2,7 @@
 
 # API for getting data from League of Legends API and datadragon stuff.
 
-## Must download and extract datadragon files for the server to use before first run.
+## Must download and extract datadragon files for the server to use before first run (https://developer.riotgames.com/docs/lol).
 ### Extract the following directories into ./datadragon: (note that most of these are in a folder with version as name ex: "./10.21.1")
 "/manifest.json", "/data/en_US", "/img/champion", "/img/item", "/img/passive",
 "/img/profileicon", "/img/spell", "img/champion/tiles", "img/perk-images"
