@@ -4,7 +4,7 @@ const bodyParser = require('body-parser');
 const app = express();
 const cors = require("cors");
 const {logger, userLogger} = require("./util");
-const {Checker} = require("./middleware");
+const { checkIfUpdating } = require("./middleware");
 
 
 //import datadragon updater which also starts the cron schedule
@@ -34,7 +34,7 @@ logger.info({message:"API Started"});
 
 //Request handling\\
 //check if datadragon files are updating 
-app.use("/lux", Checker.checkIfUpdating);
+app.use("/lux", checkIfUpdating);
 
 //log requests
 app.use("", (req, res, next) => {

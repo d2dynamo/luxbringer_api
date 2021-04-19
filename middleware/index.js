@@ -1,4 +1,4 @@
-const Checker = require("./Checker");
+const checkIfUpdating = require("./Checker");
 module.exports = {
-    Checker,
+    checkIfUpdating,
 };
