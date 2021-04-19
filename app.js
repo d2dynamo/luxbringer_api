@@ -1,25 +1,18 @@
 require("dotenv").config();
-const debug = require("debug")("test:app"),name="main.js";
 const express = require('express');
 const bodyParser = require('body-parser');
-const route = require("./routes");
 const app = express();
 const cors = require("cors");
 const {logger, userLogger} = require("./util");
 const {Checker} = require("./middleware");
 
-//get datadragon version upon initialization and set it to global.
-const axios = require("axios");
-let ddVerRes = axios.get(`https://ddragon.leagueoflegends.com/api/versions.json`)
-.then( ddVersionsResponse => {
-  global.DATADRAGON_VERSION = ddVersionsResponse.data[0];
-  debug(`datadragon version ${DATADRAGON_VERSION}`);
-})
-.catch( error => {debug(`Couldn't get datadragon version ${error}`)} )
-
 
 //import datadragon updater which also starts the cron schedule
-const { DatadragonUpdater } = require("./util");
+const { cronDatadragonUpdater } = require("./util");
+
+//ensure that datadragon manifest is available and read current dd version
+const ddManifest = require("./datadragon/manifest.json");
+global.DATADRAGON_VERSION = ddManifest.v;
 
 const corsOptions = {
   origin: "*",
@@ -36,12 +29,11 @@ app.use(cors(corsOptions));
 app.options("*", cors());
 
 
-
-debug("Api started");
+logger.info({message:"API Started"});
 
 
 //Request handling\\
-//check if files are updating
+//check if datadragon files are updating 
 app.use("/lux", Checker.checkIfUpdating);
 
 //log requests
@@ -70,7 +62,7 @@ app.use((error, req, res, next) =>
   }
 
   else{ //log server errors
-      logger.error({status: error.status || 500, message:error.message});
+      logger.error({message:error.message});
   }
 
   res.status(error.status || 500)

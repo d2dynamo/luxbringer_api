@@ -46,6 +46,7 @@ return new Promise((resolve) => {
         return fs.rm("./temp", {recursive:true})
     })
     .then(() => {
+        global.DATADRAGON_VERSION = newVersion;
         logger.info({message:`Datadragon updated to latest. v${newVersion}`});
         resolve(true);
     })
