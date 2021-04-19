@@ -8,7 +8,7 @@ return (
 `
 [${label}] :: ${timestamp};
 level: ${level};
-message: ${status !== undefined ? status+" " : ""}${typeof(message) === "string" ? message : JSON.stringify(message)};
+message: ${typeof(message) === "string" ? message : JSON.stringify(message)};
 ---------------------------`
 );
 })
