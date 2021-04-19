@@ -3,17 +3,22 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const app = express();
 const cors = require("cors");
-const {logger, userLogger} = require("./util");
+const {logger, userLogger, downloadFile} = require("./util");
 const { checkIfUpdating } = require("./middleware");
-
 
 //import datadragon updater which also starts the cron schedule
 const { cronDatadragonUpdater } = require("./util");
 
-//ensure that datadragon manifest is available and read current dd version
+//ensure that datadragon manifest is available and pass current datadragon version to a global var
 const ddManifest = require("./datadragon/manifest.json");
 global.DATADRAGON_VERSION = ddManifest.v;
 
+//download queues json which should not be neccesary to do with every update
+downloadFile("http://static.developer.riotgames.com/docs/lol/queues.json", "./datadragon/queues.json")
+.then(() => { logger.info({message: "queues.json downloaded"}) })
+.catch((error) => { logger.error({message: `failed to download queues.json \n${error}`}) })
+
+//set cors
 const corsOptions = {
   origin: "*",
   methods: ["GET", "POST"]
@@ -29,11 +34,8 @@ app.use(cors(corsOptions));
 app.options("*", cors());
 
 
-logger.info({message:"API Started"});
-
-
 //Request handling\\
-//check if datadragon files are updating 
+//check if datadragon files are updating before serving from datadragon dependant endpoint
 app.use("/lux", checkIfUpdating);
 
 //log requests
@@ -74,5 +76,7 @@ app.use((error, req, res, next) =>
 
 }
 );
+
+logger.info({message:"API Started"});
 
 module.exports = app;
