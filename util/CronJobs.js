@@ -8,8 +8,9 @@ module.exports = {
         logger.info({message:`cronDatadragonUpdater started.`})
         DatadragonUpdater()
         .then((success) => {
-            if(!success){ logger.error({message:`cronDatadragonUpdater got false from DatadragonUpdater. Strange error, shouldn't happen!`}); return;}
-            else{logger.info({message:"Datadragon succesfully updated!"})}
+            //success = false means local datadragon is latest
+            if(!success){ logger.info({message:`Datadragon is already up-to-date.`}); return; }
+            else{ logger.info({message:"Datadragon succesfully updated!"}); return; }
         }) 
         .catch( error => { logger.error({message:`cronDatadragonUpdater failed! \n${error}`}) })
     })

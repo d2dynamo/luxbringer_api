@@ -54,7 +54,7 @@ return new Promise((resolve) => {
 })
 }
 
-return new Promise((resolve, reject) => {
+return new Promise((resolve) => {
     logger.info("Running datadragon updater")
     //Write temporary file to show that datadragon is updating. 
     //"Checker" middleware checks for updating.txt before letting trough requests to datadragon dependant endpoints.
@@ -77,11 +77,11 @@ return new Promise((resolve, reject) => {
             fs.readJSON("./datadragon/manifest.json")
             .then((obj) => {
                 logger.info({message:`local datadragon version: ${obj.v}. Latest datadragon version: ${newVerison}`})
-                //Reject if version is latest, do update if not
+                //Resolve false if version is latest, do update if not
                 if(obj.v == newVersion){
                     //Remove the temporary file so datadragon dependant endpoints can now be reached (doUpdate() does this by itself)
                     fs.rm("./temp/updating.txt")
-                    .then(() => { reject("datadragon is up-to-date") }) 
+                    .then(() => { resolve(false) }) 
                 }
                 else{ resolve(doUpdate(newVersion)) }
             })
