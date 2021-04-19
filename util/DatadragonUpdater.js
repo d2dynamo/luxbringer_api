@@ -44,7 +44,7 @@ return new Promise((resolve) => {
         return fs.copy(`./temp/datadragon/${newVersion}/manifest.json`, "./datadragon/manifest.json", {overwrite: true})
     })
     .then(() => {
-        return fs.copy(`./temp/datadragon/img`, "./datadragon/img")
+        return fs.copy(`./temp/datadragon/img`, "./datadragon/img", {overwrite: true})
     })
     .then(() => {
         //delete temp files
