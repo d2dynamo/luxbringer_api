@@ -5,6 +5,7 @@ const app = express();
 const cors = require("cors");
 const {logger, userLogger, downloadFile} = require("./util");
 const { checkIfUpdating } = require("./middleware");
+const router = require("./routes");
 
 //import datadragon updater which also starts the cron schedule
 const { cronDatadragonUpdater } = require("./util");
@@ -45,7 +46,7 @@ app.use("", (req, res, next) => {
 })
 
 //send to router
-app.use("", route);
+app.use("", router);
 
 //on page not found
 app.use((req, res, next) => {

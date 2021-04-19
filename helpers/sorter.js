@@ -1,17 +1,9 @@
 const debug = require("debug")("test:sorter");
-const datadragon = require("../datadragon");
+const fs = require("fs-extra");
 const legacyItem = require("../legacyDatadragon/legacyItem.json");
-/*
-* Destruct relevant data files
-* "item" file renamed to itemJSON so that it doesnt collide with "item" naming convention in iterating loops (like foreach, filter)
-*/
-const { champion, item:itemJSON, queues, summonerSpell, rune: runes } = datadragon;
+const axios = require("axios");
 
-const { data: summonerSpells } = summonerSpell
-const { data: champions } = champion;
-const { data: items } = itemJSON;
 const { data: legacyItems } = legacyItem;
-
 
 // simple function to capitalize strings
 function capitalize(str){
@@ -21,7 +13,7 @@ function capitalize(str){
 }
 
 /*
-*   Keep this for future incase riot decides to properly use the "stats" field. 
+*   Keep this for future incase riot decides use the "stats" field on items. 
 *   Stats like Base Mana Regen, Lethality and Magic pen arent displayed in the stats field. 
 *   ex: Faerie Charm has Base Mana Regen but its not displayed in the "stats" field.
 */
@@ -48,7 +40,9 @@ module.exports = {
 
 /** Takes queue id and returns queue description */
 findQueueName: async(qid) => 
-{ 
+{
+    let queues = await fs.readJson(`../datadragon/queues.json`);
+
     return queues.filter
     ( 
         (que) => { return que.queueId === parseInt(qid) } 
@@ -58,6 +52,9 @@ findQueueName: async(qid) =>
 /** Takes queue name and returns an array of queue ids that matched */
 findQueueIds: async(qname) => 
 { 
+    let queues = await fs.readJson(`../datadragon/queues.json`);
+
+
     let output = new Array();
 
     queues.filter
@@ -86,6 +83,8 @@ findRoleName: async(match) =>
 /** Find champion name by chmapion id */
 findChampionName: async(chid) => 
 {
+    let { data:champions } = await fs.readJson("./datadragon/data/en_US/champion.json");
+
     for (let name in champions) 
     {
         if( 
@@ -100,6 +99,8 @@ findChampionName: async(chid) =>
 /** Find item id by item name */
 findItemId: async(itemName) => 
 {
+    let { data: items} = await fs.readJson(`../datadragon/data/en_US/item.json`);
+
     for(let key in items)
     {
         if( 
@@ -159,6 +160,8 @@ itemDataSimple: async(data) =>
 */
 itemData: async(data, legacy) => 
 {
+    let { data: items} = await fs.readJson(`../datadragon/data/en_US/item.json`);
+
     let statsList = null;
     //separate stats from description if <stats> tag exists
     if(data.description.includes("<stats>")) 
@@ -301,6 +304,10 @@ matchData: async(data, summonerName) =>
 *   summoner name; iconId; team; champion name; K/D/A; cs/min; summspells; items[]; rune styles primary/second;
 */
 
+let { data: summonerSpells } = await fs.readJson(`../datadragon/data/en_US/summoner.json`);
+let { data: items} = await fs.readJson(`../datadragon/data/en_US/item.json`);
+let { data: runes} = await fs.readJson(`../datadragon/data/en_US/runesReforged.json`);
+
 //Get summoner's participant id
 let sPID = data.participantIdentities.filter( item => item.player.summonerName === summonerName )[0].participantId;
 //get summoner match stats
@@ -392,17 +399,17 @@ let output =
 
 
         //Parse summoner spell names
-        summonerSpell1: ((x, y) =>
+        summonerSpell1: ((_summonerSpells, _spell1Id) =>
         {
-            for (const item of Object.keys(x)) {
-                if(x[item].key === y.toString()){ return x[item].name }
+            for (const item of Object.keys(_summonerSpells)) {
+                if(_summonerSpells[item].key === _spell1Id.toString()){ return _summonerSpells[item].name }
             }
         })(summonerSpells, summonerData.spell1Id),
         
-        summonerSpell2: ((x, y) =>
+        summonerSpell2: ((_summonerSpells, _spell2Id) =>
         {
-            for (const item of Object.keys(x)) {
-                if(x[item].key === y.toString()){ return x[item].name }
+            for (const item of Object.keys(_summonerSpells)) {
+                if(_summonerSpells[item].key === _spell2Id.toString()){ return _summonerSpells[item].name }
             }
         })(summonerSpells, summonerData.spell2Id),
 
@@ -412,7 +419,6 @@ let output =
         {
             //parse game version
             let gameVer = data.gameVersion.split(".");
-            let z;
     
             /*
             * if match version is older than version starting preseason 13 (mythic item update), 
@@ -613,7 +619,7 @@ let output =
         //asigns to output.players
         return playersOut;
     })()
-//END OF  let = output
+//END OF let = output
 }
 
 return output;
@@ -621,47 +627,50 @@ return output;
 },
 
 
-/** Get simple champion info. Takes a champion object */
-championDataSimple: async(data) => 
+/** 
+ * Get simple champion info. Takes a champion name 
+ * @param champName string: champion name
+ */
+championDataSimple: async(champName) => 
 {   
-    /**
-     * Current format:
-     *  name; base health; health per level; mana; mana per second;
-     *  ad; ad per level;
-     */
-    champions["Aatrox"]
+    const { data } = await fs.readJson("./datadragon/data/en_US/champion.json");
+
+    if( !data[capitalize(champName)] ){ throw new Error("Champion does not exist!")}
+
+    let champion = data[capitalize(champName)]
+
     let output = 
     {
-        name: data.name,
+        name: champion.name,
 
-        hp: data.stats["hp"],
-        hpPerLevel: data.stats["hpperlevel"],
+        hp: champion.stats["hp"],
+        hpPerLevel: champion.stats["hpperlevel"],
 
-        hpRegen: data.stats["hpregenperlevel"],
-        hpRegenPerLevel: data.stats["hpregenperlevel"],
+        hpRegen: champion.stats["hpregenperlevel"],
+        hpRegenPerLevel: champion.stats["hpregenperlevel"],
 
-        resourceType: data.partype,
-        mp: data.stats["mp"],
-        mpPerLevel: data.stats["mpperlevel"],
+        resourceType: champion.partype,
+        mp: champion.stats["mp"],
+        mpPerLevel: champion.stats["mpperlevel"],
 
-        mpRegen: data.stats["mpregen"],
-        mpRegenPerLevel: data.stats["mpregenperlevel"],
+        mpRegen: champion.stats["mpregen"],
+        mpRegenPerLevel: champion.stats["mpregenperlevel"],
 
-        armor: data.stats["armor"],
-        armorPerLevel: data.stats["armorperlevel"],
+        armor: champion.stats["armor"],
+        armorPerLevel: champion.stats["armorperlevel"],
 
-        mr: data.stats["spellblock"],
-        mrPerLevel: data.stats["spellblockperlevel"],
+        mr: champion.stats["spellblock"],
+        mrPerLevel: champion.stats["spellblockperlevel"],
 
-        ad: data.stats["attackdamage"],
-        adPerLevel: data.stats["attackdamageperlevel"],
+        ad: champion.stats["attackdamage"],
+        adPerLevel: champion.stats["attackdamageperlevel"],
 
-        as: data.stats["attackspeed"],
-        asPerLevel: data.stats["attackspeedperlevel"],
+        as: champion.stats["attackspeed"],
+        asPerLevel: champion.stats["attackspeedperlevel"],
 
-        range: data.stats["attackrange"],
+        range: champion.stats["attackrange"],
 
-        ms: data.stats["movespeed"],
+        ms: champion.stats["movespeed"],
 
     }
 
@@ -669,8 +678,7 @@ championDataSimple: async(data) =>
 },
 
 /** Get detailed champion info */
-// Currently cant find where rito stores champion ability stats' info. 
-// ex: the base damage of aatrox q increases per level but it is not shown in any ddragon json file
+// ex: the base damage of aatrox Q increase per level
 // championData: async(data) => 
 // {
 

@@ -1,17 +1,16 @@
 const debug = require("debug")("test:ItemsController");
+const fs = require("fs-extra");
 const { sorter, queryStrings } = require("../helpers");
 const { secrets } = require("../config");
 const { logger } = require("../util");
 const apiKey = secrets.apiKey;
-const itemStore = require("../datadragon/10.23.1/data/en_US/item.json");
-
-//destruct the items object
-let { data: items } = itemStore;
 
 module.exports = {
     generalInfo: async(req, res, next) => {
         try
         {
+          let { data: items} = await fs.readJson(`../datadragon/data/en_US/item.json`);
+
           let { itemName } = req.body;
           
           //find item id, return 404 if item not found (return; to stop function from executing further)
@@ -31,6 +30,9 @@ module.exports = {
     detailedInfo: async(req, res, next) => {
       try
       {
+        let { data: items} = await fs.readJson(`../datadragon/data/en_US/item.json`);
+
+
         let { itemName } = req.body;
         
         
