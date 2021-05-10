@@ -20,55 +20,58 @@ function capitalize(str){
 }
 
 module.exports = {
-generalInfo: async(req, res, next) => 
+/**
+ * 
+ * @param {*} summonerName 
+ * @param {*} region 
+ * @returns basic summoner data
+ */
+generalInfo: async(summonerName, region) => 
 {
   try
   {
-    let { summonerName, region } = req.body;
-
+    //Get summoner data
     let summonerData = await axios.get(`${riotApi("summoner", region)}${summonerName}?api_key=${apiKey}`);
     let summonerRankedData = await axios.get(`${riotApi("summoner_rank", region)}${summonerData.data.id}?api_key=${apiKey}`);
     let summonerMasteries = await axios.get(`${riotApi("summoner_masteries", region)}${summonerData.data.id}?api_key=${apiKey}`);
     //Sort out ranks
     let ranks = await sorter.rankData(summonerRankedData.data);
     
-    
-    res.status(200).json
-    ({
-      data:
+    //sort summoner data
+    let data =
+    {
+      summonerName: summonerData.data.name,
+      summonerIconId: summonerData.data.profileIconId,
+      summonerLevel: summonerData.data.summonerLevel,
+      soloQRank: `${ranks.soloduo.rank} ${ranks.soloduo.lp}lp`,
+      soloQWinrate: ranks.soloduo.winRate,
+      topChampion: 
       {
-        summonerName: summonerData.data.name,
-        summonerIconId: summonerData.data.profileIconId,
-        summonerLevel: summonerData.data.summonerLevel,
-        soloQRank: `${ranks.soloduo.rank} ${ranks.soloduo.lp}lp`,
-        soloQWinrate: ranks.soloduo.winRate,
-        topChampion: 
-        {
-          name: await sorter.championName(summonerMasteries.data[0].championId),
-          masteryLevel: summonerMasteries.data[0].championLevel,
-          masteryPoints: summonerMasteries.data[0].championPoints,
-        }
+        name: await sorter.championName(summonerMasteries.data[0].championId),
+        masteryLevel: summonerMasteries.data[0].championLevel,
+        masteryPoints: summonerMasteries.data[0].championPoints,
       }
-
-    });
-
+    }
+    //return summoner data
+    return(data)
   }
-  catch(e){next(e)}
+  catch(e){throw e}
 },
 
 
 /**
-* Get summoner's matches.
-* Can pass a query object in body that contains:
-*   type: string | type of gamemode to search for, defaults to "ranked solo" ("tft" wont work must use "teamfight")
-*   amount: int | amount of games to search for, defaults to 1   
-*/
-matches: async(req, res, next) => 
+ * 
+ * @param {*} summonerName 
+ * @param {*} region 
+ * @param {*} query
+ *  type | String: type of gamemode to search for, defaults to "ranked solo"
+ *  amount | Int64: amount of games to search for, defaults to 1
+ * @returns Matchlist with simple stats
+ */
+matches: async(summonerName, region, query) => 
 {
   try
   {
-    let { summonerName, region, query } = req.body;
-
 
     //limit amount of games to retrieve up to 5
     if(query.amount > 5){ query.amount = 5}
@@ -81,7 +84,7 @@ matches: async(req, res, next) =>
       let qTypes = await sorter.findQueueIds(query.type);
 
       //if no quetypes found, respond with 404 and return to stop execution.
-      if(qTypes.length === 0){ res.status(404).send("queue type not found"); return;}
+      if(qTypes.length === 0){ throw({status: 404, message: "queue type not found"}); }
 
       //create the queue query params
       var queueTypeParams = ``;
@@ -115,17 +118,10 @@ matches: async(req, res, next) =>
       )
     }
 
-
-    res.status(200).json
-    ({
-      data:
-      {
-        summonerName: summonerData.data.name,
-        matchList
-      }
-    })
+    return( data = {summonerName, matchList} )
+    
   }
-  catch(e){next(e)}
+  catch(e){throw e}
 }
   
 };

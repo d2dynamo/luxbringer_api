@@ -5,16 +5,54 @@ const { SimpleController, Summoner, Item, Champion} = require("../controllers");
 
 router.all('/', (req, res, next) => { SimpleController.basicEndpoint(req, res, next); });
 
-router.get("/lux/summoner", (req, res, next) => { Summoner.generalInfo(req, res, next); });
+router.get("/lux/summoner", (req, res, next) => { 
+    //validate for summoner name and region
+    if(!req.body.summonerName || !req.body.region){ next(new TypeError("must provide a summonerName and region in request body")) }
 
-router.get("/lux/summoner/matches", (req, res, next) => { Summoner.matches(req, res, next); });
+    Summoner.generalInfo(req.body.summonerName, req.body.region)
+    .then(data => { res.status(200).send(data); })
+    .catch( e => next(e) )
+ });
 
-router.get("/lux/item", (req, res, next) => { Item.generalInfo(req, res, next); });
+router.get("/lux/summoner/matches", (req, res, next) => { 
+    if(!req.body.summonerName || !req.body.region || req.body.query){ next(new TypeError("must provide summonerName, region and query in request body")) }
+    
+    Summoner.matches(req.body.summonerName, req.body.region, req.body.query)
+    .then(data => { res.status(200).send(data); })
+    .catch( e => next(e) )
+});
 
-router.get("/lux/item/detailed", (req, res, next) => { Item.detailedInfo(req, res, next); });
+router.get("/lux/item", (req, res, next) => {
+    if(!req.body.itemName){ next(new TypeError("must provide itemName in request body")) }
 
-router.get("/lux/champion", (req, res, next) => { Champion.generalInfo(req, res, next); })
+    Item.generalInfo(itemName)
+    .then(data => { res.status(200).send(data); })
+    .catch( e = next(e) )
+});
+
+router.get("/lux/item/detailed", (req, res, next) => { 
+    if(!req.body.itemName){ next(new TypeError("must provide itemName in request body")) }
+
+    Item.detailedInfo(itemName)
+    .then(data => { res.status(200).send(data); })
+    .catch( e => next(e) ) 
+});
+
+router.get("/lux/champion", (req, res, next) => {
+    if(!req.body.championName){ next(new TypeError("must provide championName in request body")) }
+
+    Champion.generalInfo(championName)
+    .then(data => { res.status(200).send(data); })
+    .catch( e => next(e) )
+});
 
 
+// router.get("/lux/champion/detailed", (req, res, next) => { 
+//     if(!req.body.championName){ next(new TypeError("must provide championName in request body")) }
+
+//     Champion.detailedInfo(championName)
+//     .then(data => { res.status(200).send(data); })
+//     .catch( e => next(e) )
+// });
 
 module.exports = router;

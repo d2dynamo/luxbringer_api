@@ -4,38 +4,34 @@ const sorter = require("../helpers/sorter");
 
 module.exports = 
 {
-
-generalInfo: async(req, res, next) => 
+/**
+ * 
+ * @param {*} championName 
+ * @returns Simple champion data object
+ */
+generalInfo: async(championName) => 
 {
     try{
-        let { championName } = req;
-
         //sort champion data
-        let champion = await sorter.championDataSimple( championName );
+        let data = await sorter.championDataSimple( championName );
 
-        res.status(200).json(
-        {
-            data: {
-                champion
-            }
-        });
-    } catch(e){ next(e) }
+        return({ data })
+    } catch(e){ throw e }
 },
-detailedInfo: async(req, res, next) => 
+
+/**
+ * 
+ * @param {*} championName 
+ * @returns Detailed champion data
+ */
+detailedInfo: async(championName) => 
 {
     try{
-        let { championName } = req;
-
         //sort champion data
-        let champion = await sorter.championData( championName );
+        let data = await sorter.championData( championName );
 
-        res.status(200).json(
-        {
-            data: {
-                champion
-            }
-        });
-    } catch(e){ next(e) }
+        return({ data })
+    } catch(e){ throw e }
 }
 
 }

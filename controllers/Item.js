@@ -6,26 +6,27 @@ const { logger } = require("../util");
 const apiKey = secrets.apiKey;
 
 module.exports = {
-    generalInfo: async(req, res, next) => {
+  /**
+   * 
+   * @param {*} itemName
+   * @returns Simple item data
+   */
+    generalInfo: async(itemName) => {
         try
         {
           let { data: items} = await fs.readJson(`../datadragon/data/en_US/item.json`);
-
-          let { itemName } = req.body;
           
           //find item id, return 404 if item not found (return; to stop function from executing further)
           let itemId = await sorter.findItemId(itemName);
-          if(itemId === "not found"){ res.status(404).send("not found"); return; }
+          if(itemId === "not found"){ throw {status: 404, message: `Item '${itemName}' not found`} }
 
           //send the item trough the parser
           let parsedItem = await sorter.itemDataSimple(items[itemId]);
-          res.status(200).json
-          ({
-            item: parsedItem
-          });
+
+          return( {item: parsedItem} )
 
         }
-        catch(e){ next(e); }
+        catch(e){ throw e }
     },
     detailedInfo: async(req, res, next) => {
       try
