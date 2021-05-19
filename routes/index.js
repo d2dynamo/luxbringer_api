@@ -27,7 +27,7 @@ router.get("/lux/item", (req, res, next) => {
 
     Item.generalInfo(req.body.itemName)
     .then(data => { res.status(200).send(data); })
-    .catch( e = next(e) )
+    .catch( e => next(e) )
 });
 
 router.get("/lux/item/detailed", (req, res, next) => { 
