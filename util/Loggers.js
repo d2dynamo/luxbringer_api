@@ -3,7 +3,7 @@ const { timestamp, label, printf, combine} = format;
 
 const timeStampOptions = {format:"YYYY/M/DD|hh:mm:ss|Z"};
 
-const defaultForm = printf( ({timestamp, label, level, message, status}) => {
+const defaultForm = printf( ({timestamp, label, level, message}) => {
 return (
 `
 [${label}] :: ${timestamp};

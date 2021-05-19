@@ -61,18 +61,16 @@ app.use((error, req, res, next) =>
 
   //if error status 400-499, log as user error.
   if( [...Array(100).keys()].map(i => i + 400).includes(error.status) ){
-      userLogger.error({status: error.status, message: error.message, headers: req.headers, body: req.body, origin: req.hostname});
+    userLogger.error({status: error.status, message: error.message, headers: req.headers, body: req.body, origin: req.hostname});
   }
 
   else{ //log server errors
-      logger.error({message:error.message});
+    logger.error({message:error.stack});
   }
 
   res.status(error.status || 500)
   .json({
-    error: {
-      message: error.message
-    }
+    error: error.message
   });
 
 }
