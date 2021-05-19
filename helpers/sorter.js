@@ -64,7 +64,7 @@ module.exports = {
  */
 findQueueName: async(qid) => 
 {
-    let queues = await fs.readJson(`../datadragon/queues.json`);
+    let queues = await fs.readJson(`./datadragon/queues.json`);
 
     return queues.filter
     ( 
@@ -79,7 +79,7 @@ findQueueName: async(qid) =>
  */
 findQueueIds: async(qname) => 
 { 
-    let queues = await fs.readJson(`../datadragon/queues.json`);
+    let queues = await fs.readJson(`./datadragon/queues.json`);
 
 
     let output = new Array();
@@ -130,7 +130,7 @@ findChampionName: async(chid) =>
 /** Find item id by item name */
 findItemId: async(itemName) => 
 {
-    let { data: items} = await fs.readJson(`../datadragon/data/en_US/item.json`);
+    let { data: items} = await fs.readJson(`./datadragon/data/en_US/item.json`);
 
     for(let key in items)
     {
@@ -195,7 +195,7 @@ itemDataSimple: async(data) =>
  */
 itemData: async(data, legacy) => 
 {
-    let { data: items} = await fs.readJson(`../datadragon/data/en_US/item.json`);
+    let { data: items} = await fs.readJson(`./datadragon/data/en_US/item.json`);
 
     let statsList = null;
     //separate stats from description if <stats> tag exists
@@ -339,9 +339,9 @@ matchData: async(data, summonerName) =>
 *   summoner name; iconId; team; champion name; K/D/A; cs/min; summspells; items[]; rune styles primary/second;
 */
 
-let { data: summonerSpells } = await fs.readJson(`../datadragon/data/en_US/summoner.json`);
-let { data: items} = await fs.readJson(`../datadragon/data/en_US/item.json`);
-let { data: runes} = await fs.readJson(`../datadragon/data/en_US/runesReforged.json`);
+let { data: summonerSpells } = await fs.readJson(`./datadragon/data/en_US/summoner.json`);
+let { data: items} = await fs.readJson(`./datadragon/data/en_US/item.json`);
+let { data: runes} = await fs.readJson(`./datadragon/data/en_US/runesReforged.json`);
 
 //Get summoner's participant id
 let sPID = data.participantIdentities.filter( item => item.player.summonerName === summonerName )[0].participantId;

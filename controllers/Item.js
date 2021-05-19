@@ -11,7 +11,7 @@ module.exports = {
     generalInfo: async(itemName) => {
         try
         {
-          let { data: items} = await fs.readJson(`../datadragon/data/en_US/item.json`);
+          let { data: items} = await fs.readJson(`./datadragon/data/en_US/item.json`);
           
           //find item id, return 404 if item not found (return; to stop function from executing further)
           let itemId = await sorter.findItemId(itemName);
@@ -33,7 +33,7 @@ module.exports = {
     detailedInfo: async(itemName) => {
       try
       {
-        let { data: items} = await fs.readJson(`../datadragon/data/en_US/item.json`);
+        let { data: items} = await fs.readJson(`./datadragon/data/en_US/item.json`);
         
         
         let itemId = await sorter.findItemId(itemName);
