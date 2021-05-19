@@ -1,7 +1,6 @@
 const debug = require("debug")("test:sorter");
 const fs = require("fs-extra");
 const legacyItem = require("../legacyDatadragon/legacyItem.json");
-const axios = require("axios");
 
 const { data: legacyItems } = legacyItem;
 
@@ -38,7 +37,11 @@ module.exports = {
 //--------------Simple sorters to get names/ids from datadragon--------------\\
 
 
-/** Takes queue id and returns queue description */
+/**
+ * 
+ * @param {number} qid - Queue id 
+ * @returns queue name
+ */
 findQueueName: async(qid) => 
 {
     let queues = await fs.readJson(`../datadragon/queues.json`);
@@ -49,7 +52,11 @@ findQueueName: async(qid) =>
     )[0].description;
 },
 
-/** Takes queue name and returns an array of queue ids that matched */
+/**
+ * 
+ * @param {string} qname - queue name
+ * @returns an array of queue id's that matched
+ */
 findQueueIds: async(qname) => 
 { 
     let queues = await fs.readJson(`../datadragon/queues.json`);
@@ -66,7 +73,11 @@ findQueueIds: async(qname) =>
     return output;
 },
 
-/** Takes match object from match object and returns role name */
+/**
+ * 
+ * @param {object} match 
+ * @returns role name
+ */
 findRoleName: async(match) =>
 {
     if( match.role === "DUO_SUPPORT" ){ return "support" }
@@ -115,12 +126,13 @@ findItemId: async(itemName) =>
 
 //--------------More complex sorters for bigger data--------------\\
 //NOTE: Data sorters should take the actual data objects that will be sorted from, not just name or id.
-//This is to keep uniform
+//This is for the simplicity of writing these sorters
 
 
 /** Sort ranked data, takes the response body from /league/v4/entries/by-summoner */
 rankData: async(data) => 
 {
+    //find and assign solo and flex rank object
     let soloQRank = data.filter(item => item.queueType === "RANKED_SOLO_5x5")[0];
     let flexQRank = data.filter(item => item.queueType === "RANKED_FLEX_SR")[0];
 
@@ -154,10 +166,13 @@ itemDataSimple: async(data) =>
 
 
 /**
-* Item sorter. Provide the item object and it will return item data properly sorted.
-* Will need updating if riot changes how items are described again.
-* If parsing legacy items, pass second arg boolean as true
-*/
+ * 
+ * @param {object} data 
+ * @param {boolean} legacy 
+ * @returns Full item data
+ * 
+ * Takes an item object from the items.json.
+ */
 itemData: async(data, legacy) => 
 {
     let { data: items} = await fs.readJson(`../datadragon/data/en_US/item.json`);
@@ -179,8 +194,8 @@ itemData: async(data, legacy) =>
 
     /*
     * Separate description from stats.
-    * If there was any <stats> field, stats end with </stats> so split it away, select the second item and split by <br>.
-    * Otherwise just split with <br>
+    * If there are any <stats> fields, stats end with </stats> so split it away, then select the second item and split by <br>.
+    * Else just split with <br>
     */
     let descList = new Array();
     if(statsList !== null){ descList = data.description.split("</stats>")[1].split("<br>"); }
@@ -194,13 +209,12 @@ itemData: async(data, legacy) =>
         //add indexes of empty items to a list (removing directly here will fuck the index of the array and the loop would miss items)
         if(item.length <= 1){ emptyItemIndexes.push(index); return;}
 
-        //replace any <passive> tags to mark Passive and then remove html tags 
+        //replace any <passive> tags
         item = item.replace(/<passive>/g, "Passive - ");
+        //remove all other html tags
         item = item.replace(/<\/?[^>]+>/g, "");
         array[index] = item.trim();
     })
-
-
     //removes empty strings starting from the back so that the indexes dont get fucked
     while(emptyItemIndexes.length >= 1)
     {
@@ -251,6 +265,7 @@ itemData: async(data, legacy) =>
         output.buildsFrom = buildsFrom;
     }
 
+    //if item builds into another item
     if(data.into)
     {
         let buildsInto = new Array();
@@ -275,7 +290,7 @@ itemData: async(data, legacy) =>
                 });
             }
         })
-        //add to output
+        //add builds from/into to output
         output.buildsInto = buildsInto;
     }
 
@@ -284,14 +299,14 @@ itemData: async(data, legacy) =>
 },
 
 
-/** 
-* sort match stats given a match stats object (not response body but response.body.stats)
-* Also need the requested summoner's name so that the specified summoner's stats can be sorted out of the rest
+/**
+ * @param {object} data - Match stats object (not response body but response.body.stats)
+ * @param {string} summonerName - The requested summoner's name so that the specified summoner's stats can be sorted out of the rest
 */
 matchData: async(data, summonerName) => 
 {   
 /*
-* Current format is:
+* Current return data format is:
 *
 * game duration;
 * teamBlue & teamRed: win bool; towers taken; kills;
@@ -316,7 +331,7 @@ let summonerData = data.participants.filter ( item => item.participantId === sPI
 let output = 
 {
     gameVerison: data.gameVersion,
-    duration: data.gameDuration,
+    gameDuration: data.gameDuration,
     teamBlue: 
     { 
         win: data.teams.filter( item => item.teamId === 100)[0].win === "Win",
@@ -368,10 +383,6 @@ let output =
         {
             return `${x.kills}/${x.deaths}/${x.assists}`
         })(summonerData.stats),
-
-
-        //Game duration
-        duration: data.gameDuration,
         
 
         //Parse creep slaying per minute
@@ -459,7 +470,6 @@ let output =
             //currently dont have a reliable way of getting stat mods (the ones below the secondary rune page. 10% attack speed, 9 adaptive force etc.)
             //out.stats = new Array();
     
-            //This is cant really be made cleaner due to that many arrays/objects to sort trough
             for(i = 0; i <= 3; i++)
             {
                 //foreach element in the root array
@@ -485,7 +495,8 @@ let output =
             }
     
             for(i = 4; i <= 5; i++)
-            {
+            {   
+                //Find secondary rune style
                 runes.forEach( element => 
                     {
                         if(element.id === x.perkSubStyle)
@@ -500,10 +511,6 @@ let output =
                         }
                     })
             }
-            // for(i = 0; i <= 2; i++)
-            // {
-            //     out.stats.push( x[`statPerk${i}`])
-            // }
     
             return out;
         })(summonerData.stats)
@@ -511,7 +518,7 @@ let output =
 
 
 
-    //Parse other summoners data
+    //Parse other summoner's data
     players: await(async() =>
     {
 
@@ -593,7 +600,7 @@ let output =
                 }
             })(participant.stats);
 
-            //Only need to get the keystone (Electrocute, Aftershock etc,) and the secondary rune style (Domination, Resolve etc.)
+            //Only need to get the keystone (Electrocute, Aftershock etc) and the secondary rune style (Domination, Resolve etc.)
             player.runes = (() =>
             {
                 let out = new Array();
@@ -629,13 +636,14 @@ return output;
 
 /** 
  * Get simple champion info. Takes a champion name 
- * @param champName string: champion name
+ * @param {String} champName champion name
+ * @returns simple champion data Object
  */
 championDataSimple: async(champName) => 
 {   
     const { data } = await fs.readJson("./datadragon/data/en_US/champion.json");
 
-    if( !data[capitalize(champName)] ){ throw new Error("Champion does not exist!")}
+    if( !data[capitalize(champName)] ){ throw {status: 404, message: `Champion '${champName}' does not exist`} }
 
     let champion = data[capitalize(champName)]
 
@@ -679,8 +687,13 @@ championDataSimple: async(champName) =>
 
 /** Get detailed champion info */
 // ex: the base damage of aatrox Q increase per level
-// championData: async(data) => 
+// championData: async(champName) => 
 // {
-
+//     fs.readJson(`./datadragon/data/en_US/champion/${champName}.json`)
+//     .then(json => {
+//         data = json.data.Aatrox;
+//     })
+//     .catch(e => { throw e })
 // }
+
 }

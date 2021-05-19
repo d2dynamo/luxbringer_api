@@ -6,7 +6,7 @@ module.exports =
 {
 /**
  * 
- * @param {*} championName 
+ * @param {string} championName 
  * @returns Simple champion data object
  */
 generalInfo: async(championName) => 
@@ -21,17 +21,17 @@ generalInfo: async(championName) =>
 
 /**
  * 
- * @param {*} championName 
- * @returns Detailed champion data
+ * @param {string} championName 
+ * @returns Full champion data
  */
-detailedInfo: async(championName) => 
-{
-    try{
-        //sort champion data
-        let data = await sorter.championData( championName );
+// detailedInfo: async(championName) => 
+// {
+//     try{
+//         //sort champion data
+//         let data = await sorter.championData( championName );
 
-        return({ data })
-    } catch(e){ throw e }
-}
+//         return({ data })
+//     } catch(e){ throw e }
+// }
 
 }

@@ -1,13 +1,13 @@
 # LUXBRINGER API
-
-# API for getting data from League of Legends API and datadragon stuff.
+API for getting data from League of Legends API and other League of Legends data.
 
 ## Must download and extract datadragon files for the server to use before first run (https://developer.riotgames.com/docs/lol).
 ### Extract the following directories into ./datadragon: (note that most of these are in a directory with version as name ex: "./10.21.1/manifest.json")
 "/manifest.json", "/data/en_US", "/img/champion", "/img/item", "/img/passive",
 "/img/profileicon", "/img/spell", "img/champion/tiles", "img/perk-images"
 
-If the manifest.json is missing then app.js will crash and if other files are missing then /lux endpoints will respond with error
+If the manifest.json is missing then app.js will crash and if other files are missing then /lux endpoints will respond with error.
+
 Keep legacy items from s9 for now.
 
 ## Current features:

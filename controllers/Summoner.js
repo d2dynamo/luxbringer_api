@@ -22,8 +22,8 @@ function capitalize(str){
 module.exports = {
 /**
  * 
- * @param {*} summonerName 
- * @param {*} region 
+ * @param {String} summonerName 
+ * @param {String} region 
  * @returns basic summoner data
  */
 generalInfo: async(summonerName, region) => 
@@ -61,11 +61,11 @@ generalInfo: async(summonerName, region) =>
 
 /**
  * 
- * @param {*} summonerName 
- * @param {*} region 
- * @param {*} query
- *  type | String: type of gamemode to search for, defaults to "ranked solo"
- *  amount | Int64: amount of games to search for, defaults to 1
+ * @param {String} summonerName 
+ * @param {String} region 
+ * @param {Object} query
+ *  query.type: type of gamemode to search for, defaults to "ranked solo" | String
+ *  query.amount: amount of games to search for, defaults to 1 | Int64
  * @returns Matchlist with simple stats
  */
 matches: async(summonerName, region, query) => 
