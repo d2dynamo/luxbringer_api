@@ -11,6 +11,26 @@ function capitalize(str){
     else{ return str.substr(0, 1).toUpperCase() + str.substr(1); }
 }
 
+
+//Champ colloquial object for some common colloquials
+const champColloq = [ 
+    {full:"MissFortune", colloq:["mf"]}, {full:"MasterYi", colloq:["yi", "yee"]}, {full:"Mordekaiser", colloq:["morde", "hue"]}, 
+    {full:"Jhin", colloq:["4", "four", "Khada"]}, {full:"Gangplank", colloq:["gp"]}, {full:"Morgana", colloq:["morg"]},
+    {full:"Alistar", colloq:["ali"]}, {full:"DrMundo", colloq:["mundo"]}, {full:"AurelionSol", colloq:["asol", "aurelion"]},
+    {full:"Blitzcrank", colloq:["blitz"]}, {full:"Caitlyn", colloq:["cait"]}, {full:"Cassiopeia", colloq:["cass", "cassio"]},
+    {full:"Chogath", colloq:["cho", "chonk"]}, {full:"Evelynn", colloq:["eve"]}, {full:"Ezreal", colloq:["ez", "twinkleshit"]},
+    {full:"Fiddlesticks", colloq:["fiddle"]}, {full:"Hecarim", colloq:["heca"]}, {full:"Heimerdinger", colloq:["heimer", "donger"]},
+    {full:"JarvanIV", colloq:["j4", "jarvan"]}, {full:"Katarina", colloq:["kata"]}, {full:"Khazix", colloq:["kha", "bug"]},
+    {full:"Kogmaw", colloq:["kog"]}, {full:"Leblanc", colloq:["lb"]}, {full:"LeeSin", colloq:["lee"]},
+    {full:"Malphite", colloq:["malph", "rock"]}, {full:"Nautilus", colloq:["naut", "nauti"]}, {full:"Nidalee", colloq:["nida"]},
+    {full:"Orianna", colloq:["ori"]}, {full:"Pantheon", colloq:["panth"]}, {full:"Seraphine", colloq:["sera"]},
+    {full:"TahmKench", colloq:["tahm", "kench"]}, {full:"Teemo", colloq:["rodent"]}, {full:"TwistedFate", colloq:["tf"]},
+    {full:"Twitch", colloq:["rat"]}, {full:"Warwick", colloq:["ww"]}, {full:"Wukong", colloq:["monke", "monkey"]},
+    {full:"Yuumi", colloq:["the cat", "cat"]}, {full:"Zed", colloq:["what was that"]}
+]
+
+
+
 /*
 *   Keep this for future incase riot decides use the "stats" field on items. 
 *   Stats like Base Mana Regen, Lethality and Magic pen arent displayed in the stats field. 
@@ -643,6 +663,19 @@ championDataSimple: async(champName) =>
 {   
     const { data } = await fs.readJson("./datadragon/data/en_US/champion.json");
 
+    //check if champName is a colloquial and replace it with full name
+    for(let item of champColloq){
+       if(item.colloq.includes(champName)){ champName = item.full; break;}
+    }
+    //check if champName is just part of the full name and replace it with full name
+    for(let item in data){
+        if(item.substr(0, champName.length).includes(capitalize(champName))){ champName = item; break;}
+    }
+    //if champName contains a space, capitalize both words and remove the spacebar (champ names such as Miss Fortune are assigned as MissFortune)
+    if(champName.includes(" ")){
+        champName = capitalize(champName.substr(0, champName.indexOf(" "))) + capitalize(champName.substr(champName.indexOf(" ") +1))
+    }
+    
     if( !data[capitalize(champName)] ){ throw {status: 404, message: `Champion '${champName}' does not exist`} }
 
     let champion = data[capitalize(champName)]

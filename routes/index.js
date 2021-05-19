@@ -25,7 +25,7 @@ router.get("/lux/summoner/matches", (req, res, next) => {
 router.get("/lux/item", (req, res, next) => {
     if(!req.body.itemName){ next(new TypeError("must provide itemName in request body")) }
 
-    Item.generalInfo(itemName)
+    Item.generalInfo(req.body.itemName)
     .then(data => { res.status(200).send(data); })
     .catch( e = next(e) )
 });
@@ -33,7 +33,7 @@ router.get("/lux/item", (req, res, next) => {
 router.get("/lux/item/detailed", (req, res, next) => { 
     if(!req.body.itemName){ next(new TypeError("must provide itemName in request body")) }
 
-    Item.detailedInfo(itemName)
+    Item.detailedInfo(req.body.itemName)
     .then(data => { res.status(200).send(data); })
     .catch( e => next(e) ) 
 });
@@ -41,7 +41,7 @@ router.get("/lux/item/detailed", (req, res, next) => {
 router.get("/lux/champion", (req, res, next) => {
     if(!req.body.championName){ next(new TypeError("must provide championName in request body")) }
 
-    Champion.generalInfo(championName)
+    Champion.generalInfo(req.body.championName)
     .then(data => { res.status(200).send(data); })
     .catch( e => next(e) )
 });
