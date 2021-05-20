@@ -2,22 +2,9 @@ const debug = require("debug")("test:summoner");
 const axios = require("axios");
 const { sorter, queryStrings } = require("../helpers");
 const { secrets } = require("../config");
-const { logger } = require("../util");
 const apiKey = secrets.apiKey;
 
-let riotApi = queryStrings.urlGet;
-
-function capitalize(str){
-  if(typeof(str) !== "string"){ throw new TypeError("must be a string") }
-
-  else
-  {
-    let a = str.substr(0, 1).toUpperCase();
-    let b = str.substr(1);
-
-    return a+b;
-  }
-}
+const riotApi = queryStrings.urlGet;
 
 module.exports = {
 /**
@@ -34,9 +21,24 @@ generalInfo: async(summonerName, region) =>
     let summonerData = await axios.get(`${riotApi("summoner", region)}${summonerName}?api_key=${apiKey}`);
     let summonerRankedData = await axios.get(`${riotApi("summoner_rank", region)}${summonerData.data.id}?api_key=${apiKey}`);
     let summonerMasteries = await axios.get(`${riotApi("summoner_masteries", region)}${summonerData.data.id}?api_key=${apiKey}`);
+
     //Sort out ranks
     let ranks = await sorter.rankData(summonerRankedData.data);
     
+    if(summonerMasteries.data.length == 0){summonerMasteries.data.push(
+      {
+        championId: 0,
+        championLevel: 0,
+        championPoints: 0,
+        lastPlayTime: 0,
+        championPointsSinceLastLevel: 0,
+        championPointsUntilNextLevel: 0,
+        chestGranted: false,
+        tokensEarned: 0,
+        summonerId: 'unknown'
+      },
+    )}
+
     //sort summoner data
     let data =
     {
@@ -47,7 +49,7 @@ generalInfo: async(summonerName, region) =>
       soloQWinrate: ranks.soloduo.winRate,
       topChampion: 
       {
-        name: await sorter.championName(summonerMasteries.data[0].championId),
+        name: await sorter.findChampionName(summonerMasteries.data[0].championId),
         masteryLevel: summonerMasteries.data[0].championLevel,
         masteryPoints: summonerMasteries.data[0].championPoints,
       }

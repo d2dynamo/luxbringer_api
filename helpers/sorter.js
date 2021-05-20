@@ -1,4 +1,5 @@
 const debug = require("debug")("test:sorter");
+const { json } = require("body-parser");
 const fs = require("fs-extra");
 const legacyItem = require("../legacyDatadragon/legacyItem.json");
 
@@ -123,7 +124,7 @@ findChampionName: async(chid) =>
         )
         { return champions[name].name }
     }
-    return "not found";
+    return "champion not found";
 },
 
 
@@ -156,21 +157,41 @@ rankData: async(data) =>
     let soloQRank = data.filter(item => item.queueType === "RANKED_SOLO_5x5")[0];
     let flexQRank = data.filter(item => item.queueType === "RANKED_FLEX_SR")[0];
 
-    return output =
-    {
-        soloduo: 
+    //define unranked output if no soloq or flex rank found
+    let output = {
+        soloduo:
+        {
+            rank: `unranked`,
+            lp: 0,
+            winRate: `0`
+        },
+        flex:
+        {
+            rank: `unranked`,
+            lp: 0,
+            winRate: `0`
+        }
+    }
+
+    //if soloq or flex rank found, add it to output
+    if(soloQRank){
+        output.soloduo =
         {
             rank: `${capitalize(soloQRank.tier.toLowerCase())} ${soloQRank.rank}`,
             lp: soloQRank.leaguePoints,
             winRate: `${Math.round(( (soloQRank.wins / (soloQRank.wins + soloQRank.losses)) * 1000 )) / 10}%`
-        },
-        flex: 
+        }
+    }
+
+    if(flexQRank){
+        output.flex =
         {
             rank: `${capitalize(flexQRank.tier.toLowerCase())} ${flexQRank.rank}`,
             lp: flexQRank.leaguePoints,
             winRate: `${Math.round(( (flexQRank.wins / (flexQRank.wins + flexQRank.losses)) * 1000 )) / 10}%`
         }
     }
+    return output;
 },
 
 
