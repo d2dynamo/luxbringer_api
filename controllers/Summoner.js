@@ -63,32 +63,30 @@ generalInfo: async(summonerName, region) =>
 
 /**
  * 
- * @param {String} summonerName 
- * @param {String} region 
- * @param {Object} query
- *  query.type: type of gamemode to search for, defaults to "ranked solo" | String
- *  query.amount: amount of games to search for, defaults to 1 | Int64
+ * @param {string} summonerName 
+ * @param {string} region 
+ * @param {string} queueType queue type. ex: solo, aram, urf
+ * @param {number} amount amount of games to look for max 6
  * @returns Matchlist with simple stats
  */
-matches: async(summonerName, region, query) => 
+matches: async(summonerName, region, queueType, amount) => 
 {
   try
   {
-
-    //limit amount of games to retrieve up to 5
-    if(query.amount > 5){ query.amount = 5}
+    //limit amount of games to retrieve up to 6
+    if(amount > 6){ amount = 6}
 
 
     //if query contains a requested quetype
-    if(query.type)
+    if(queueType)
     {
       //send requested queue name trough the sorter
-      let qTypes = await sorter.findQueueIds(query.type);
+      let qTypes = await sorter.findQueueIds(queueType);
 
       //if no quetypes found, respond with 404 and return to stop execution.
       if(qTypes.length === 0){ throw({status: 404, message: "queue type not found"}); }
 
-      //create the queue query params
+      //create the queue query string and append the queue ids
       var queueTypeParams = ``;
       qTypes.forEach( item => { queueTypeParams += `&queue=${item}` })
     }
@@ -96,11 +94,11 @@ matches: async(summonerName, region, query) =>
 
     //get summonerdata
     let summonerData = await axios.get(`${riotApi("summoner", region)}${summonerName}?api_key=${apiKey}`);
-    let summonerMatches = await axios.get(   
-      //Check if request includes query parameters and pass them (amount of games defaults to 1)
-      `${riotApi("summoner_match_list", region)}${summonerData.data.accountId}?endIndex=${query.amount ? query.amount : 1}${queueTypeParams ? queueTypeParams : ""}&api_key=${apiKey}`
+    let summonerMatches = await axios.get(
+      //Check if amount and queueTypes included
+      `${riotApi("summoner_match_list", region)}${summonerData.data.accountId}?endIndex=${amount}${queueTypeParams ? queueTypeParams : ""}&api_key=${apiKey}`
     );
-    
+
 
     //matchlist that will be returned
     let matchList = new Array();
@@ -109,7 +107,7 @@ matches: async(summonerName, region, query) =>
     {
       //get match stats
       let matchStats = await axios.get(`${riotApi("match_stats", region)}${item.gameId}?api_key=${apiKey}`)
-      debug("matchstats", matchStats.data)
+
       //send each match's stats trough sorter and push to list
       matchList.push(
         {
@@ -120,7 +118,7 @@ matches: async(summonerName, region, query) =>
       )
     }
 
-    return( data = {summonerName, matchList} )
+    return {summonerName, matchList}
     
   }
   catch(e){throw e}

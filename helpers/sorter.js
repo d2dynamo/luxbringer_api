@@ -1,5 +1,4 @@
 const debug = require("debug")("test:sorter");
-const { json } = require("body-parser");
 const fs = require("fs-extra");
 const legacyItem = require("../legacyDatadragon/legacyItem.json");
 
@@ -85,9 +84,10 @@ findQueueIds: async(qname) =>
 
     let output = new Array();
 
+    //filter through queues and skip deprecated queues.
     queues.filter
-    ( 
-        (que) => { return que.description.toLowerCase().includes(qname) } 
+    (
+        (que) => { if( !que.notes || !que.notes.includes("Deprecated") ){ return que.description.toLowerCase().includes(qname) } } 
     )
     .forEach( item => { output.push(item.queueId) } )
 

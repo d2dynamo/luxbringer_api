@@ -15,9 +15,9 @@ router.get("/lux/summoner", (req, res, next) => {
  });
 
 router.get("/lux/summoner/matches", (req, res, next) => { 
-    if(!req.body.summonerName || !req.body.region || req.body.query){ next(new TypeError("must provide summonerName, region and query in request body")) }
+    if(!req.body.summonerName || !req.body.region ){ next(new TypeError("must provide summonerName and region in request body")) }
     
-    Summoner.matches(req.body.summonerName, req.body.region, req.body.query)
+    Summoner.matches(req.body.summonerName, req.body.region, (req.body.queueType ? req.body.queueType : null), (req.body.amount ? req.body.amount : 3))
     .then(data => { res.status(200).send(data); })
     .catch( e => next(e) )
 });
