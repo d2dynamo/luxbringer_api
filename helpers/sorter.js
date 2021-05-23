@@ -26,7 +26,7 @@ const champColloq = [
     {full:"Orianna", colloq:["ori"]}, {full:"Pantheon", colloq:["panth"]}, {full:"Seraphine", colloq:["sera"]},
     {full:"TahmKench", colloq:["tahm", "kench"]}, {full:"Teemo", colloq:["rodent"]}, {full:"TwistedFate", colloq:["tf"]},
     {full:"Twitch", colloq:["rat"]}, {full:"Warwick", colloq:["ww"]}, {full:"Wukong", colloq:["monke", "monkey"]},
-    {full:"Yuumi", colloq:["the cat", "cat"]}, {full:"Zed", colloq:["what was that"]}
+    {full:"Yuumi", colloq:["cat"]}, {full:"Aphelios", colloq:["200", "mr200"]}
 ]
 
 
