@@ -9,8 +9,8 @@ router.get("/lux/summoner", (req, res, next) => {
     //validate for summoner name and region
     if( !req.body.summonerName && !req.query.summonerName ){ next(new TypeError("must provide summonerName. ex: /lux/summoner?summonerName=faker&region=kr")) }
 
-    let summonerName = req.body.summonerName || req.query.summonerName;
-    let region = req.body.region || req.query.region || "euw";
+    let summonerName = req.query.summonerName || req.body.summonerName;
+    let region = req.query.region || req.body.region || "euw";
 
     Summoner.generalInfo(summonerName, region)
     .then(data => { res.status(200).send(data); })
@@ -20,10 +20,10 @@ router.get("/lux/summoner", (req, res, next) => {
 router.get("/lux/summoner/matches", (req, res, next) => { 
     if( !req.body.summonerName && !req.query.summonerName ){ next(new TypeError("must provide summonerName. ex: /lux/summoner?summonerName=faker&region=kr")) }
 
-    let summonerName = req.body.summonerName || req.query.summonerName;
-    let region = req.body.region || req.query.region || "euw";
-    let queueType = req.body.queueType || req.query.queueType || null;
-    let amount = req.body.amount || req.query.amount || 3;
+    let summonerName = req.query.summonerName || req.body.summonerName;
+    let region = req.query.region || req.body.region || "euw";
+    let queueType = req.query.queueType || req.body.queueType || null;
+    let amount = req.query.amount || req.body.amount || 3;
 
     Summoner.matches(summonerName, region, queueType, amount)
     .then(data => { res.status(200).send(data); })
