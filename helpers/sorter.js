@@ -690,11 +690,7 @@ championDataSimple: async(champName) =>
     }
     //check if champName is just part of the full name and replace it with full name
     for(let item in data){
-        if(item.substr(0, champName.length).includes(capitalize(champName))){ champName = item; break;}
-    }
-    //if champName contains a space, capitalize both words and remove the spacebar (champ names such as Miss Fortune are assigned as MissFortune)
-    if(champName.includes(" ")){
-        champName = capitalize(champName.substr(0, champName.indexOf(" "))) + capitalize(champName.substr(champName.indexOf(" ") +1))
+        if(item.substr(0, champName.length).toLowerCase().includes(champName.toLowerCase())){ champName = item; break;}
     }
     
     if( !data[capitalize(champName)] ){ throw {status: 404, message: `Champion '${champName}' does not exist`} }
