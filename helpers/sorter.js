@@ -208,15 +208,15 @@ itemDataSimple: async(data) =>
 
 /**
  * 
- * @param {object} data 
+ * @param {number} itemId the item ID as found in item.json
  * @param {boolean} legacy 
  * @returns Full item data
  * 
- * Takes an item object from the items.json.
  */
-itemData: async(data, legacy) => 
+itemData: async(itemId, legacy) => 
 {
-    let { data: items} = await fs.readJson(`./datadragon/data/en_US/item.json`);
+    let { data: items } = await fs.readJson(`./datadragon/data/en_US/item.json`);
+    let data = items[itemId];
 
     let statsList = null;
     //separate stats from description if <stats> tag exists
@@ -235,45 +235,49 @@ itemData: async(data, legacy) =>
 
     /*
     * Separate description from stats.
-    * If there are any <stats> fields, stats end with </stats> so split it away, then select the second item and split by <br>.
-    * Else just split with <br>
+    * Also separate rules from descriptions.
     */
     let descList = new Array();
-    if(statsList !== null){ descList = data.description.split("</stats>")[1].split("<br>"); }
-    else{ descList = data.description.split("<br>"); }
     
+    //separate descriptions from stats
+    let _descriptions = data.description.split("</stats>")[1];
 
-    //clean up the descriptions
+    //split away from <rules> or <rarityMYthic>. The split up passives and actives by <li> and push all items to descList. 
+    descList.push( ..._descriptions.split("<rules>")[0].split("<rarityMythic>")[0].split("<li>") );
+
+    //split off mythic passive if it exists and add to list.
+    if(_descriptions.includes("<rarityMythic>")){ descList.push(_descriptions.split("<rarityMythic>")[1].split("<br>")[0]) }
+
+    //if description included <rules>, add all rules to descList
+    if(_descriptions.includes("<rules>")){ 
+        let rules = _descriptions.split("<rules>")[1].split("<br>");
+        for(let item of rules){
+            descList.push(item);
+        }
+    }
+    //remove all html tags and add empty item indexes to list
     let emptyItemIndexes = new Array();
-    descList.forEach( (item, index, array) => 
-    {
-        //add indexes of empty items to a list (removing directly here will fuck the index of the array and the loop would miss items)
-        if(item.length <= 1){ emptyItemIndexes.push(index); return;}
-
-        //replace any <passive> tags
-        item = item.replace(/<passive>/g, "Passive - ");
-        //remove all other html tags
+    descList.forEach((item, index, array) => {
+        item = item.replace(/<passive>/, "Passive - ");
         item = item.replace(/<\/?[^>]+>/g, "");
-        array[index] = item.trim();
+        array[index] = item;
+        if(item.length <= 1){emptyItemIndexes.push(index)}
     })
-    //removes empty strings starting from the back so that the indexes dont get fucked
+
+    //remove empty strings starting from the back so that the indexes dont get fucked
     while(emptyItemIndexes.length >= 1)
     {
         descList.splice(emptyItemIndexes.pop(), 1);
     }
-
 
     //Define output\\
     let output = {
         name: data.name,
         price: data.gold.total,
         icon: data.image.full,
+        stats: statsList,
         descriptions: descList
     }
-
-
-    //If there is a statslist, add it
-    if(statsList){ output.stats = statsList } 
 
 
     //check if item builds from another item or builds into another item and provide a list with their name, price and icon

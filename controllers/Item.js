@@ -32,15 +32,13 @@ module.exports = {
      */
     detailedInfo: async(itemName) => {
       try
-      {
-        let { data: items} = await fs.readJson(`./datadragon/data/en_US/item.json`);
-        
+      {        
         
         let itemId = await sorter.findItemId(itemName);
         if(itemId === "not found"){ throw {status: 404, message: `Item '${itemName}' not found`} }
 
 
-        let parsedItem = await sorter.itemData(items[itemId]);
+        let parsedItem = await sorter.itemData(itemId);
 
         return( {item: parsedItem} )
 
