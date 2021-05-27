@@ -252,6 +252,7 @@ itemData: async(itemId, legacy) =>
     if(_descriptions.includes("<rules>")){ 
         let rules = _descriptions.split("<rules>")[1].split("<br>");
         for(let item of rules){
+            item = item.replace(/<\/?[^>]+>/g, "");
             descList.push(item);
         }
     }
