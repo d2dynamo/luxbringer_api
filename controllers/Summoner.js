@@ -1,4 +1,3 @@
-const debug = require("debug")("test:summoner");
 const axios = require("axios");
 const { sorter, queryStrings } = require("../helpers");
 const { secrets } = require("../config");
@@ -9,11 +8,11 @@ const riotApi = queryStrings.urlGet;
 module.exports = {
 /**
  * 
- * @param {String} summonerName 
- * @param {String} region 
+ * @param {string} summonerName 
+ * @param {string} region 
  * @returns basic summoner data
  */
-generalInfo: async(summonerName, region) => 
+generalInfo: async(summonerName, region, topChamps = 3) => 
 {
   try
   {
@@ -25,7 +24,7 @@ generalInfo: async(summonerName, region) =>
     //Sort out ranks
     let ranks = await sorter.rankData(summonerRankedData.data);
     
-    if(summonerMasteries.data.length == 0){summonerMasteries.data.push(
+    if(summonerMasteries.data.length === 0){ summonerMasteries.data.push(
       {
         championId: 0,
         championLevel: 0,
@@ -47,13 +46,18 @@ generalInfo: async(summonerName, region) =>
       summonerLevel: summonerData.data.summonerLevel,
       soloQRank: `${ranks.soloduo.rank} ${ranks.soloduo.lp}lp`,
       soloQWinrate: ranks.soloduo.winRate,
-      topChampion: 
-      {
-        name: await sorter.findChampionName(summonerMasteries.data[0].championId),
-        masteryLevel: summonerMasteries.data[0].championLevel,
-        masteryPoints: summonerMasteries.data[0].championPoints,
+      //Get top three champions, riot api sorts champion mastery array from highest mastery to lowest
+      //And since we need to use a helper to find champion name, use Promise.all to wrap all returned items with promises into one promise.
+      topChampions: await Promise.all(
+        summonerMasteries.data.slice(0, topChamps).map(async(item) => {
+          return {
+            name: await sorter.findChampionName(item.championId),
+            masteryLevel: item.championLevel,
+            masteryPoints: item.championPoints
+          }
+        })
+      )
       }
-    }
     //return summoner data
     return(data)
   }
