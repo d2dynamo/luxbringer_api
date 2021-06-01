@@ -59,19 +59,53 @@ app.use((req, res, next) => {
 app.use((error, req, res, next) => 
 {
 
-  //if error status 400-499, log as user error.
-  if( [...Array(100).keys()].map(i => i + 400).includes(error.status) ){
-    userLogger.error({status: error.status, message: error.message, headers: req.headers, body: req.body, origin: req.hostname});
+  //if a request was sent to another api but it responded with non 2XX status code
+  if(error.response){
+    if( [...Array(100).keys()].map(i => i + 400).includes(error.response.status) ){
+      userLogger.error({ 
+        status: error.response.status,
+        message: JSON.stringify(error.response.data),
+        headers: req.headers, body: req.body, origin: req.hostname
+      });
+    }
+
+    else{
+      logger.error(JSON.stringify(error.response.data))
+    }
+
+    res.status(error.response.status || 500)
+    .json({
+      message: error.response.data
+    });
   }
 
-  else{ //log server errors
-    logger.error({message:error.stack});
+  //if a request was sent to another api but no response
+  else if(error.request){ 
+    logger.error(error.request)
+
+    res.status(error.status || 500)
+    .json({
+      message: error.request
+    });
+
   }
 
-  res.status(error.status || 500)
-  .json({
-    message: error.message
-  });
+  //otherwise its an error from this server
+  else{
+    //if error status 400-499, log as user error with user request 
+    if( error.status && [...Array(100).keys()].map(i => i + 400).includes(error.status) ){
+      userLogger.error({status: error.status, message: error.message, headers: req.headers, body: req.body, origin: req.hostname});
+    }
+
+    else{ //log server errors
+      logger.error(error.stack);
+    }
+
+    res.status(error.status || 500)
+    .json({
+      message: error.message
+    });
+  }
 
 }
 );
