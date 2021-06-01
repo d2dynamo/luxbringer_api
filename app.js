@@ -73,9 +73,10 @@ app.use((error, req, res, next) =>
       logger.error(JSON.stringify(error.response.data))
     }
 
+    //check if reponse.data has a status property which is what riot responds with on 404 responses and send the message thats inside of it
     res.status(error.response.status || 500)
     .json({
-      message: error.response.data
+      message: (error.response.data.status ? error.response.data.status.message : error.response.data)
     });
   }
 
