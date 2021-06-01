@@ -3,7 +3,11 @@ API for getting data from League of Legends API and other League of Legends data
 
 Can read PORT env variable. Defaults to 3000.
 
-### Datadragon files can be left for the api to automatically download. So no initial setup is required.
+## Setup
+Create ./config/index.js and export your riot api key from there
+
+Datadragon files can be left for the api to automatically download.
+
 You should still make sure that the datadragon updater does finnish the update (it can take a while since datadragon is close to 1gb in size)
 Updater sends logs to console at various points of the update process.
 
