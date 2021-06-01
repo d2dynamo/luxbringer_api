@@ -1,7 +1,7 @@
 const axios = require("axios");
 const { sorter, queryStrings } = require("../helpers");
-const { secrets } = require("../config");
-const apiKey = secrets.apiKey;
+const config = require("../config");
+const apiKey = config.apiKey;
 
 const riotApi = queryStrings.urlGet;
 
