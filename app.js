@@ -6,18 +6,27 @@ const cors = require("cors");
 const {logger, userLogger, downloadFile} = require("./util");
 const { checkIfUpdating } = require("./middleware");
 const router = require("./routes");
+const fs = require("fs-extra");
 
 //import datadragon updater which also starts the cron schedule
 const { cronDatadragonUpdater } = require("./util");
 
-//ensure that datadragon manifest is available and pass current datadragon version to a global var
-const ddManifest = require("./datadragon/manifest.json");
-global.DATADRAGON_VERSION = ddManifest.v;
+//check if datadragon exists and run updater if not
+if(!fs.pathExistsSync("./datadragon/manifest.json")){
+  const { DatadragonUpdater } = require("./util");
+  DatadragonUpdater()
+  .then(sucess => {
+    if(sucess){logger.info("datadragon sucessfully downloaded on first run")}
+  })
+  .catch(e => logger.error(e.trace || e.message))
+}
+//assign local datadragon version to global variable if there are datadragon files
+else{
+  const ddManifest = fs.readJsonSync("./datadragon/manifest.json");
+  global.DATADRAGON_VERSION = ddManifest.v;
+  logger.info(`local datadragon version ${DATADRAGON_VERSION}`)
+}
 
-//download queues json which should not be neccesary to do with every update
-downloadFile("http://static.developer.riotgames.com/docs/lol/queues.json", "./datadragon/queues.json")
-.then(() => { logger.info({message: "queues.json downloaded"}) })
-.catch((error) => { logger.error({message: `failed to download queues.json \n${error}`}) })
 
 //set cors
 const corsOptions = {

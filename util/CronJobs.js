@@ -1,11 +1,10 @@
-const debug = require("debug")("test:CronJobs");
 const cron = require("node-cron");
 const DatadragonUpdater = require("./DatadragonUpdater");
 const { logger } = require("./Loggers");
 
 module.exports = {
     cronDatadragonUpdater: cron.schedule("0 3 * * 1-7", () => {
-        logger.info({message:`cronDatadragonUpdater started.`})
+        logger.info({message:`cronDatadragonUpdater scheduled task running.`})
         DatadragonUpdater()
         .then((success) => {
             //success = false means local datadragon is latest
