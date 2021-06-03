@@ -17,15 +17,15 @@ router.get("/lux/summoner", (req, res, next) => {
     .catch( e => next(e) )
  });
 
-router.get("/lux/summoner/matches", (req, res, next) => { 
+router.get("/lux/summoner/match", (req, res, next) => { 
     if( !req.body.summonerName && !req.query.summonerName ){ next(new TypeError("must provide summonerName. ex: /lux/summoner?summonerName=faker&region=kr")) }
 
     let summonerName = req.query.summonerName || req.body.summonerName;
     let region = req.query.region || req.body.region || "euw";
     let queueType = req.query.queueType || req.body.queueType || null;
-    let amount = req.query.amount || req.body.amount || 3;
+    let amount = req.query.amount || req.body.amount || 1;
 
-    Summoner.matches(summonerName, region, queueType, amount)
+    Summoner.match(summonerName, region, queueType, amount)
     .then(data => { res.status(200).send(data); })
     .catch( e => next(e) )
 });

@@ -73,7 +73,7 @@ generalInfo: async(summonerName, region, topChamps = 3) =>
  * @param {number} amount amount of games to look for max 6
  * @returns Matchlist with simple stats
  */
-matches: async(summonerName, region, queueType, amount) => 
+match: async(summonerName, region, queueType, amount) => 
 {
   try
   {
