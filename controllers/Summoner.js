@@ -77,8 +77,8 @@ match: async(summonerName, region, queueType, amount) =>
 {
   try
   {
-    //limit amount of games to retrieve up to 6
-    if(amount > 6){ amount = 6}
+    //limit amount of games to retrieve up to 5
+    if(amount > 5){ amount = 5}
 
 
     //if query contains a requested quetype
