@@ -1,6 +1,7 @@
 const debug = require("debug")("test:sorter");
 const fs = require("fs-extra");
 const legacyItem = require("../legacyDatadragon/legacyItem.json");
+const { logger } = require("../util");
 
 const { data: legacyItems } = legacyItem;
 
@@ -87,10 +88,17 @@ findQueueIds: async(qname) =>
     //filter through queues and skip deprecated queues.
     queues.filter
     (
-        (que) => { if( !que.notes || !que.notes.includes("Deprecated") ){ return que.description.toLowerCase().includes(qname) } } 
+        (que) => {
+            if( que.notes && que.notes.includes("Deprecated") ){ return false }
+
+            //if there is no description return map name
+            if(!que.description){ return que.map.toLowerCase().includes(qname) }
+
+            return que.description.toLowerCase().includes(qname)
+
+        } 
     )
     .forEach( item => { output.push(item.queueId) } )
-
     return output;
 },
 
@@ -215,6 +223,7 @@ itemDataSimple: async(data) =>
  */
 itemData: async(itemId, legacy) => 
 {
+
     let { data: items } = await fs.readJson(`./datadragon/data/en_US/item.json`);
     let data = items[itemId];
 
@@ -361,321 +370,323 @@ matchData: async(data, summonerName) =>
 *   team; champion name; K/D/A; cs/min; total gold; vision score; wards placed; 
 *   summspells; items; runes[]; totalDamageDealt; totalDamageTaken;
 * 
-* Every summoner: 
+* Every other summoner: 
 *   summoner name; iconId; team; champion name; K/D/A; cs/min; summspells; items[]; rune styles primary/second;
 */
 
-let { data: summonerSpells } = await fs.readJson(`./datadragon/data/en_US/summoner.json`);
-let { data: items} = await fs.readJson(`./datadragon/data/en_US/item.json`);
-let { data: runes} = await fs.readJson(`./datadragon/data/en_US/runesReforged.json`);
 
-//Get summoner's participant id
-let sPID = data.participantIdentities.filter( item => item.player.summonerName === summonerName )[0].participantId;
-//get summoner match stats
-let summonerData = data.participants.filter ( item => item.participantId === sPID)[0];
-
-let output = 
-{
-    gameVerison: data.gameVersion,
-    gameDuration: data.gameDuration,
-    teamBlue: 
-    { 
-        win: data.teams.filter( item => item.teamId === 100)[0].win === "Win",
-        towersTaken: data.teams.filter( item => item.teamId === 100)[0].towerKills, 
-        totalKills: (()=>
-        {
-            let count = 0;
-            for (const participant of data.participants){ 
-                if(participant.teamId === 100){count += participant.stats.kills} 
-            }
-            return count;
-        })() 
-    }, 
-
-    teamRed: 
-    { 
-        win: data.teams.filter( item => item.teamId === 200)[0].win === "Win",
-        towersTaken: data.teams.filter( item => item.teamId === 200)[0].towerKills, 
-        totalKills: (()=>
-        {
-            let count = 0;
-            for (const participant of data.participants){ 
-                if(participant.teamId === 200){count += participant.stats.kills} 
-            }
-            return count;
-        })() 
-    }, 
-
-    summoner: 
-    {   
-        //Parse team name (will probably be broken on any new game modes with more than two teams.)
-        team: ((x) => 
-        { 
-            switch(x)
-            { 
-                case 100: return "Blue";
-                case 200: return "Red";
-                default: return "unknown team";
-            } 
-        })(summonerData.teamId),
-
-
-        //Parse champion name with local exported function
-        champion: await module.exports.findChampionName(summonerData.championId),
-        
-
-        //Parse kills/deaths/assists
-        kda: ((x) => 
-        {
-            return `${x.kills}/${x.deaths}/${x.assists}`
-        })(summonerData.stats),
-        
-
-        //Parse creep slaying per minute
-        csPerMin: ((x, y) => 
-        {
-            return +(Math.round(x / (y/60) + "e+2") + "e-2");
-        })(summonerData.stats.totalMinionsKilled, data.gameDuration),
-
-
-        //Total gold earned
-        gold: summonerData.stats.goldEarned,
-
-
-        //Vision score
-        visionScore: summonerData.stats.visionScore,
-
-
-        //Total amount wards placed
-        wardsPlaced: summonerData.stats.wardsPlaced,
-
-
-        //Damage dealt/taken
-        totalDamageDealt: summonerData.stats.totalDamageDealt,
-        totalDamageTaken: summonerData.stats.totalDamageTaken,
-
-
-        //Parse summoner spell names
-        summonerSpell1: ((_summonerSpells, _spell1Id) =>
-        {
-            for (const item of Object.keys(_summonerSpells)) {
-                if(_summonerSpells[item].key === _spell1Id.toString()){ return _summonerSpells[item].name }
-            }
-        })(summonerSpells, summonerData.spell1Id),
-        
-        summonerSpell2: ((_summonerSpells, _spell2Id) =>
-        {
-            for (const item of Object.keys(_summonerSpells)) {
-                if(_summonerSpells[item].key === _spell2Id.toString()){ return _summonerSpells[item].name }
-            }
-        })(summonerSpells, summonerData.spell2Id),
-
-
-        //Parse items
-        items: await (async(_participantStats) =>
-        {
-            //parse game version
-            let gameVer = data.gameVersion.split(".");
+    let { data: summonerSpells } = await fs.readJson(`./datadragon/data/en_US/summoner.json`);
+    let { data: items} = await fs.readJson(`./datadragon/data/en_US/item.json`);
+    let runes = await fs.readJson(`./datadragon/data/en_US/runesReforged.json`);
     
-            /*
-            * if match version is older than version starting preseason 13 (mythic item update), 
-            * attempt to use legacy items from version 9.24.1
-            * This is unreliable and luxbringer is not meant to delve into legacy history
-            * API and discordbot documentation and user introduction should mention that luxbringer is not meant to provide legacy data
-            */
-            let legacy = false;
-            if( 
-                ( parseInt(gameVer[0]) === 10 && parseInt(gameVer[1]) >= 23 ) 
-                || (parseInt(gameVer[0]) > 10) 
-                //select current items json, else legacy items json
-            ) { _items = items; }
-            else { _items = legacyItems; legacy = true; }
-    
-            //there are 7 items starting with "item0", parse each one ("item6" is trinket)
-            let out = new Array();
-            for(i = 0; i <= 6; i++)
-            {
-                if(_participantStats[`item${i}`] !== 0) 
-                {
-                    //simple data sorter still takes the item object to keep uniform so select it from the json
-                    let parsedItem = await module.exports.itemDataSimple( _items[ _participantStats[`item${i}`] ] );
-                    out.push(parsedItem); 
-                }
-            }
-    
-            return out;
-        })(summonerData.stats),
+    //Get summoner's participant id
+    let sPID = data.participantIdentities.filter( item => item.player.summonerName === summonerName )[0].participantId;
+    //get summoner match stats
+    let summonerData = data.participants.filter ( item => item.participantId === sPID)[0];
 
-
-        //Parse runes
-        runes: ((x) =>
-        {
-            let out = new Object();
-            out.primary = new Array();
-            out.secondary = new Array();
-            //currently dont have a reliable way of getting stat mods (the ones below the secondary rune page. 10% attack speed, 9 adaptive force etc.)
-            //out.stats = new Array();
-    
-            for(i = 0; i <= 3; i++)
-            {
-                //foreach element in the root array
-                runes.forEach( element => 
-                {
-                    //match rune style (Domination, Resolve etc.)
-                    if(element.id === x.perkPrimaryStyle)
-                    {
-                        /*
-                        * Each slots array is a rune row in the game. Ex: the first "slots" array contains objects of keystones such as Electrocute or Aftershock.
-                        * and the rest of the "slots" arrays contain each rune styles' runes such as Sudden Impact or Font of Life
-                        */
-                        element.slots.forEach( slot => 
-                        {
-                            //foreach rune (Sudden Impact, Font of Life etc.) in the "slots" array 
-                            slot.runes.forEach( item => 
-                            {
-                                if(item.id === x[`perk${i}`]){ out.primary.push({ name:item.name, icon:item.icon }) }
-                            })
-                        })
-                    }
-                })
-            }
-    
-            for(i = 4; i <= 5; i++)
-            {   
-                //Find secondary rune style
-                runes.forEach( element => 
-                    {
-                        if(element.id === x.perkSubStyle)
-                        {
-                            element.slots.forEach( slot => 
-                            {
-                                slot.runes.forEach( item => 
-                                {
-                                    if(item.id === x[`perk${i}`]){ out.secondary.push({ name:item.name, icon:item.icon })}
-                                })
-                            })
-                        }
-                    })
-            }
-    
-            return out;
-        })(summonerData.stats)
-    },
-
-
-
-    //Parse other summoner's data
-    players: await(async() =>
+    let output = 
     {
+        gameVerison: data.gameVersion,
+        gameDuration: data.gameDuration,
+        teamBlue: 
+        { 
+            win: data.teams.filter( item => item.teamId === 100)[0].win === "Win",
+            towersTaken: data.teams.filter( item => item.teamId === 100)[0].towerKills, 
+            totalKills: (()=>
+            {
+                let count = 0;
+                for (const participant of data.participants){ 
+                    if(participant.teamId === 100){count += participant.stats.kills} 
+                }
+                return count;
+            })() 
+        }, 
 
-        let playersOut = new Array();
+        teamRed: 
+        { 
+            win: data.teams.filter( item => item.teamId === 200)[0].win === "Win",
+            towersTaken: data.teams.filter( item => item.teamId === 200)[0].towerKills, 
+            totalKills: (()=>
+            {
+                let count = 0;
+                for (const participant of data.participants){ 
+                    if(participant.teamId === 200){count += participant.stats.kills} 
+                }
+                return count;
+            })() 
+        }, 
 
-        for (const participant of data.participants) {
-            //the player object to be pushed into the 'playersOut' array
-            let player = new Object();
-
-
-            player.name = data.participantIdentities.filter( item => item.participantId == participant.participantId)[0].player.summonerName;
-            
-            player.iconId = data.participantIdentities.filter( item => item.participantId == participant.participantId)[0].player.profileIcon;
-
-
-            player.team = (() => 
+        summoner: 
+        {   
+            //Parse team name (will probably be broken on any new game modes with more than two teams.)
+            team: ((x) => 
             { 
-                switch(participant.teamId)
+                switch(x)
                 { 
                     case 100: return "Blue";
                     case 200: return "Red";
                     default: return "unknown team";
                 } 
-            })();
+            })(summonerData.teamId),
 
 
-            player.champion = await module.exports.findChampionName(participant.championId);
+            //Parse champion name with local exported function
+            champion: await module.exports.findChampionName(summonerData.championId),
+            
+
+            //Parse kills/deaths/assists
+            kda: ((x) => 
+            {
+                return `${x.kills}/${x.deaths}/${x.assists}`
+            })(summonerData.stats),
+            
+
+            //Parse creep slaying per minute
+            csPerMin: ((x, y) => 
+            {
+                return +(Math.round(x / (y/60) + "e+2") + "e-2");
+            })(summonerData.stats.totalMinionsKilled, data.gameDuration),
 
 
-            player.kda = ((x) =>{ return `${x.kills}/${x.deaths}/${x.assists}` })(participant.stats);
+            //Total gold earned
+            gold: summonerData.stats.goldEarned,
 
 
-            player.csPerMin = ((x, y) => { return x / (y/60); })(participant.stats.totalMinionsKilled, data.gameDuration);
+            //Vision score
+            visionScore: summonerData.stats.visionScore,
 
 
-            player.gold = participant.stats.goldEarned,
+            //Total amount wards placed
+            wardsPlaced: summonerData.stats.wardsPlaced,
 
 
-            player.summonerSpell1 = ((_summonerSpells, _spell1Id) =>
+            //Damage dealt/taken
+            totalDamageDealt: summonerData.stats.totalDamageDealt,
+            totalDamageTaken: summonerData.stats.totalDamageTaken,
+
+
+            //Parse summoner spell names
+            summonerSpell1: ((_summonerSpells, _spell1Id) =>
             {
                 for (const item of Object.keys(_summonerSpells)) {
                     if(_summonerSpells[item].key === _spell1Id.toString()){ return _summonerSpells[item].name }
                 }
-            })(summonerSpells, participant.spell1Id);
-
-            player.summonerSpell2 = ((_summonerSpells, _spell2Id) =>
+            })(summonerSpells, summonerData.spell1Id),
+            
+            summonerSpell2: ((_summonerSpells, _spell2Id) =>
             {
                 for (const item of Object.keys(_summonerSpells)) {
                     if(_summonerSpells[item].key === _spell2Id.toString()){ return _summonerSpells[item].name }
                 }
-            })(summonerSpells, participant.spell2Id);
+            })(summonerSpells, summonerData.spell2Id),
 
 
-            player.items = await (async(_participantStats) =>
-            {   
+            //Parse items
+            items: await (async(_participantStats) =>
+            {
+                //parse game version
                 let gameVer = data.gameVersion.split(".");
-
-
-                let _items;
+        
+                /*
+                * if match version is older than version starting preseason 13 (mythic item update), 
+                * attempt to use legacy items from version 9.24.1
+                * This is unreliable and luxbringer is not meant to delve into legacy history
+                * API and discordbot documentation and user introduction should mention that luxbringer is not meant to provide legacy data
+                */
                 let legacy = false;
                 if( 
                     ( parseInt(gameVer[0]) === 10 && parseInt(gameVer[1]) >= 23 ) 
                     || (parseInt(gameVer[0]) > 10) 
+                    //select current items json, else legacy items json
                 ) { _items = items; }
                 else { _items = legacyItems; legacy = true; }
-                    
-
+        
+                //there are 7 items starting with "item0", parse each one ("item6" is trinket)
                 let out = new Array();
-                
-                for(i = 0; i <= 6; i++){
+                for(i = 0; i <= 6; i++)
+                {
                     if(_participantStats[`item${i}`] !== 0) 
                     {
-                        let parsedItem = new Object();
-                        if(_items[ _participantStats[`item${i}`]] === undefined){ parsedItem = { name: "Unknown Legacy Item" } }
-                        else{ parsedItem = await module.exports.itemDataSimple( _items[ _participantStats[`item${i}`] ] ); }
-                        out.push(parsedItem);
+                        //simple data sorter still takes the item object to keep uniform so select it from the json
+                        let parsedItem = await module.exports.itemDataSimple( _items[ _participantStats[`item${i}`] ] );
+                        out.push(parsedItem); 
                     }
-                    if(i === 6){ return out }
                 }
-            })(participant.stats);
-
-            //Only need to get the keystone (Electrocute, Aftershock etc) and the secondary rune style (Domination, Resolve etc.)
-            player.runes = (() =>
-            {
-                let out = new Array();
-
-                out.push(
-                    //get keystone name
-                    runes.filter( element => element.id === participant.stats.perkPrimaryStyle )[0].slots[0].runes.filter(rune => rune.id === participant.stats.perk0)[0].name 
-                )
-
-                out.push(
-                    //get secondary runepage style name
-                    runes.filter( element => element.id === participant.stats.perkSubStyle )[0].name
-                )
-
         
                 return out;
-            })()
+            })(summonerData.stats),
 
-            //push player to players array
-            playersOut.push(player);
-        }
 
-        //asigns to output.players
-        return playersOut;
-    })()
-//END OF let = output
-}
+            //Parse runes
+            runes: ((x) =>
+            {
+                let out = new Object();
+                out.primary = new Array();
+                out.secondary = new Array();
+                //currently dont have a reliable way of getting stat mods (the ones below the secondary rune page. 10% attack speed, 9 adaptive force etc.)
+                //out.stats = new Array();
+        
+                for(i = 0; i <= 3; i++)
+                {
+                    //foreach element in the root array
+                    runes.forEach( element => 
+                    {
+                        //match rune style (Domination, Resolve etc.)
+                        if(element.id === x.perkPrimaryStyle)
+                        {
+                            /*
+                            * Each slots array is a rune row in the game. Ex: the first "slots" array contains objects of keystones such as Electrocute or Aftershock.
+                            * and the rest of the "slots" arrays contain each rune styles' runes such as Sudden Impact or Font of Life
+                            */
+                            element.slots.forEach( slot => 
+                            {
+                                //foreach rune (Sudden Impact, Font of Life etc.) in the "slots" array 
+                                slot.runes.forEach( item => 
+                                {
+                                    if(item.id === x[`perk${i}`]){ out.primary.push({ name:item.name, icon:item.icon }) }
+                                })
+                            })
+                        }
+                    })
+                }
+        
+                for(i = 4; i <= 5; i++)
+                {   
+                    //Find secondary rune style
+                    console.log("runes", runes)
+                    runes.forEach( element => 
+                        {
+                            if(element.id === x.perkSubStyle)
+                            {
+                                element.slots.forEach( slot => 
+                                {
+                                    slot.runes.forEach( item => 
+                                    {
+                                        if(item.id === x[`perk${i}`]){ out.secondary.push({ name:item.name, icon:item.icon })}
+                                    })
+                                })
+                            }
+                        })
+                }
+        
+                return out;
+            })(summonerData.stats)
+        },
 
-return output;
+
+
+        //Parse other summoner's data
+        players: await(async() =>
+        {
+
+            let playersOut = new Array();
+
+            for (const participant of data.participants) {
+                //the player object to be pushed into the 'playersOut' array
+                let player = new Object();
+
+
+                player.name = data.participantIdentities.filter( item => item.participantId == participant.participantId)[0].player.summonerName;
+                
+                player.iconId = data.participantIdentities.filter( item => item.participantId == participant.participantId)[0].player.profileIcon;
+
+
+                player.team = (() => 
+                { 
+                    switch(participant.teamId)
+                    { 
+                        case 100: return "Blue";
+                        case 200: return "Red";
+                        default: return "unknown team";
+                    } 
+                })();
+
+
+                player.champion = await module.exports.findChampionName(participant.championId);
+
+
+                player.kda = ((x) =>{ return `${x.kills}/${x.deaths}/${x.assists}` })(participant.stats);
+
+
+                player.csPerMin = ((x, y) => { return x / (y/60); })(participant.stats.totalMinionsKilled, data.gameDuration);
+
+
+                player.gold = participant.stats.goldEarned,
+
+
+                player.summonerSpell1 = ((_summonerSpells, _spell1Id) =>
+                {
+                    for (const item of Object.keys(_summonerSpells)) {
+                        if(_summonerSpells[item].key === _spell1Id.toString()){ return _summonerSpells[item].name }
+                    }
+                })(summonerSpells, participant.spell1Id);
+
+                player.summonerSpell2 = ((_summonerSpells, _spell2Id) =>
+                {
+                    for (const item of Object.keys(_summonerSpells)) {
+                        if(_summonerSpells[item].key === _spell2Id.toString()){ return _summonerSpells[item].name }
+                    }
+                })(summonerSpells, participant.spell2Id);
+
+
+                player.items = await (async(_participantStats) =>
+                {   
+                    let gameVer = data.gameVersion.split(".");
+
+
+                    let _items;
+                    let legacy = false;
+                    if( 
+                        ( parseInt(gameVer[0]) === 10 && parseInt(gameVer[1]) >= 23 ) 
+                        || (parseInt(gameVer[0]) > 10) 
+                    ) { _items = items; }
+                    else { _items = legacyItems; legacy = true; }
+                        
+
+                    let out = new Array();
+                    
+                    for(i = 0; i <= 6; i++){
+                        if(_participantStats[`item${i}`] !== 0) 
+                        {
+                            let parsedItem = new Object();
+                            if(_items[ _participantStats[`item${i}`]] === undefined){ parsedItem = { name: "Unknown Legacy Item" } }
+                            else{ parsedItem = await module.exports.itemDataSimple( _items[ _participantStats[`item${i}`] ] ); }
+                            out.push(parsedItem);
+                        }
+                        if(i === 6){ return out }
+                    }
+                })(participant.stats);
+
+                //Only need to get the keystone (Electrocute, Aftershock etc) and the secondary rune style (Domination, Resolve etc.)
+                player.runes = (() =>
+                {
+                    let out = new Array();
+
+                    out.push(
+                        //get keystone name
+                        runes.filter( element => element.id === participant.stats.perkPrimaryStyle )[0].slots[0].runes.filter(rune => rune.id === participant.stats.perk0)[0].name 
+                    )
+
+                    out.push(
+                        //get secondary runepage style name
+                        runes.filter( element => element.id === participant.stats.perkSubStyle )[0].name
+                    )
+
+            
+                    return out;
+                })()
+
+                //push player to players array
+                playersOut.push(player);
+            }
+
+            //returns playersOut array to output.players
+            return playersOut;
+        })()
+    //END OF let = output
+    }
+
+    return output;
 //END OF matchData()
 },
 
