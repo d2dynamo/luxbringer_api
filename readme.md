@@ -28,13 +28,16 @@ Retrieve basic or detailed item data
 Retrieve basic champion stats
 
 ## TODO:
-Retrieve detailed champion info which includes base stats and ability stats (Ability data is included in each champion's json in /data/en_US/champion/${CHAMPION_NAME}.json).
+Separate all sorter functions into separate files in a 'sorters' dir (also put champ colloquials object into a json in sorters dir).
+
+Retrieve detailed champion info which includes base stats and ability stats.
+(Should it include descriptions? The 'champion' commands are meant for easy checking and comparing of the ever changing champion stats, not learning what exactly the champion does.)
+
+Write a summoner stat parser which includes summoner's average performance in past 50 blind/draft/soloq games. (name as 'detailed summoner info').
+(Make sure support and jungler game stats get calculated separately from laners?)
 
 Rewrite DatadragonUpdater to download files separately instead of the full datadragon zip.
-Alot of the files in the complete zip are just translated files.
-
-Separate all sorter functions into separate files? 
-sorter.js is already at 700 lines with a plethora of separate sorter functions.
+Alot of the files in the complete zip are just translated files and i should probably skip the image files too cause they seem pointless here.
 
 Make sure datadragon files exist before serving from datadragon dependant endpoints? 
 That shouldnt be necesary since /lux end points are unreachable while dd files being updated.
