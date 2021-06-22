@@ -39,5 +39,12 @@ Write a summoner stat parser which includes summoner's average performance in pa
 Rewrite DatadragonUpdater to download files separately instead of the full datadragon zip.
 Alot of the files in the complete zip are just translated files and i should probably skip the image files too cause they seem pointless here.
 
+
+Consider writing summoner stats sorter as a microservice? 
+The summoner stats sorter will proccess up to 300 games which means it can very quickly become a bottleneck if and when more people start using luxbringer.
+This would also allow using a language better suited for big data processing like python.
+
+
+
 Make sure datadragon files exist before serving from datadragon dependant endpoints? 
 That shouldnt be necesary since /lux end points are unreachable while dd files being updated.
